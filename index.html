@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+        }
+        .ai-message {
+            background-color: #f5f5f5;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #2196f3;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button onclick="sendMessage()" id="send-button">Send</button>
+        <button onclick="clearChat()" id="clear-button">Clear Context</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        let conversationId = null;
+        
+        // Load or create conversation ID to persist over page reloads
+        async function initializeConversation() {
+            conversationId = sessionStorage.getItem('conversationId');
+            if (!conversationId) {
+                conversationId = generateConversationId();
+                sessionStorage.setItem('conversationId', conversationId);
+            }
+            // Load existing messages
+            await loadConversation();
+        }
+
+        function generateConversationId() {
+            return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        async function loadConversation() {
+            try {
+                const response = await fetch(`/conversation/${conversationId}`);
+                const messages = await response.json();
+                chatContainer.innerHTML = ''; // Clear existing messages
+                messages.forEach(msg => {
+                    addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
+                });
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
+        }
+
+        async function clearChat() {
+            try {
+                await fetch(`/conversation/${conversationId}`, {
+                    method: 'DELETE'
+                });
+                conversationId = generateConversationId();
+                sessionStorage.setItem('conversationId', conversationId);
+                chatContainer.innerHTML = '';
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+            }
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Disable input and button while processing
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            try {
+                // Create a new message div for AI response with streaming cursor
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.className = 'message ai-message';
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                aiMessageDiv.appendChild(cursor);
+                chatContainer.appendChild(aiMessageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Set up server sent event connection
+                const eventSource = new EventSource(
+                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
+                );
+                let fullResponse = '';
+
+                eventSource.onmessage = (event) => {
+                    if (event.data === '[DONE]') {
+                        eventSource.close();
+                        cursor.remove();
+                    } else {
+                        const chunk = event.data;
+                        fullResponse += chunk;
+                        aiMessageDiv.textContent = fullResponse;
+                        aiMessageDiv.appendChild(cursor);
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
+                };
+
+                eventSource.onerror = (error) => {
+                    console.error('SSE Error:', error);
+                    eventSource.close();
+                    cursor.remove();
+                    if (!fullResponse) {
+                        aiMessageDiv.textContent = 'Sorry, there was an error processing your request.';
+                    }
+                };
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request.', 'ai');
+            }
+
+            // Re-enable input and button
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Allow sending message with Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Initialize conversation when page loads
+        initializeConversation();
+    </script>
+</body>
+</html>

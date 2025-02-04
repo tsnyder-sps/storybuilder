@@ -1,0 +1,10 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "app.js",
+  "dependencies": {
+    "express": "^4.21.2",
+    "openai": "^4.28.0"
+  }
+}
