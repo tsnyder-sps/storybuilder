@@ -1,10 +1,25 @@
 {
-  "name": "hello-world",
+  "name": "my-server",
   "version": "1.0.0",
-  "type": "module",
-  "main": "app.js",
+  "main": "node_server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
+    "@cloudflare/pages-plugin-cloudflare-access": "^1.0.5",
+    "axios": "^1.7.9",
+    "child_process": "^1.0.2",
+    "cloudflared": "^0.6.0",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
-    "openai": "^4.28.0"
+    "http": "^0.0.1-security",
+    "json-stringify-safe": "^5.0.1",
+    "json5": "^2.2.3",
+    "marked": "^15.0.7",
+    "node-fetch": "^3.3.2"
   }
 }
