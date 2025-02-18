@@ -1,202 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Narrative generator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        #chat-container {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            min-height: 300px;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .message {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .user-message {
-            background-color: #e3f2fd;
-        }
-        .ai-message {
-            background-color: #f5f5f5;
-        }
-        #input-container {
-            display: flex;
-            gap: 10px;
-        }
-        #message-input {
-            flex-grow: 1;
-            padding: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #2196f3;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #ccc;
-        }
-        .cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: #2196f3;
-            margin-left: 2px;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
+        button {background-color:#FF0000;border-radius:10%;color:white;font-family:'Times New Roman'}
+        input {background-color:#000000;border-radius:10%;color:white;font-family:'Times New Roman'}
+        textarea {background-color:#000000;color:white;font-family:'Times New Roman'}
+        label {background-color:#000000;color:white;font-family:'Times New Roman'}
     </style>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <div id="chat-container"></div>
-    <div id="input-container">
-        <input type="text" id="message-input" placeholder="Type your message...">
-        <button onclick="sendMessage()" id="send-button">Send</button>
-        <button onclick="clearChat()" id="clear-button">Clear Context</button>
+    <!--ai response elements-->
+    <textarea id="aiResponseBackground" readonly
+    style="color:white;resize:none;position:absolute;top:5vh;left:55vw;width:40vw;height:80vh;">
+    </textarea>
+    <div id="aiResponse"
+    style="overflow:auto;position:absolute;top:6vh;left:56vw;height:79vh;width:39vw;color:white;">
     </div>
-
+    <button id="selectNarrative" onclick="loadNarrative()"
+    style="position:absolute;left:58vw;top:87vh;width:15vw;height:5vh;">
+    View narrative</button>
+    <button id="selectQuiz" onclick="loadQuiz()"
+    style="position:absolute;left:78vw;top:87vh;width:15vw;height:5vh;">
+    View quiz</button>
+    <!--user inputs-->
+    <label id="vocabLabel"
+    style="position:absolute;top:5vh;left:5vw;height:5vh;width:40vw;">
+    Enter comma seperated target vocab here:</label>
+    <textarea id="vocab"
+    style="resize:none;position:absolute;top:12vh;left:5vw;height:20vh;width:40vw;">
+    </textarea>
+    <label id="tenseLabel"
+    style="position:absolute;top:35vh;left:5vw;height:5vh;width:40vw;">
+    Enter comma seperated target verb conjugations here:</label>
+    <textarea id="tense"
+    style="resize:none;position:absolute;top:42vh;left:5vw;height:20vh;width:40vw;">
+    </textarea>
+    <!--user select actions-->
+    <button id="generateButton"
+    style="position:absolute;top:65vh;left:15vw;height:5vh;width:30vw;">
+    Generate narrative</button>
+    <select name="language" id="languageSelect"
+    style="font-family:Times New Roman;position:absolute;left:6vw;top:65vh;height:5vh;width:8vw;color:white;background-color:black;">
+        <option value="french">French</option>
+        <option value="spanish">Spanish</option>
+        <option value="english">English</option>
+    </select>
+    <label id="quizLabel"
+    style="position:absolute;top:72vh;left:5vw;height:5vh;width:40vw;">
+    You can specify a number of questions and have an MCQ quiz generated:</label>
+    <!--scripts-->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        const chatContainer = document.getElementById('chat-container');
-        const messageInput = document.getElementById('message-input');
-        const sendButton = document.getElementById('send-button');
-        let conversationId = null;
-        
-        // Load or create conversation ID to persist over page reloads
-        async function initializeConversation() {
-            conversationId = sessionStorage.getItem('conversationId');
-            if (!conversationId) {
-                conversationId = generateConversationId();
-                sessionStorage.setItem('conversationId', conversationId);
-            }
-            // Load existing messages
-            await loadConversation();
-        }
+        //response storage vars
+        var narrativeResponse = "";
+        var quizResponse = "";
+        //startup
+        aiResponseBackground.value = "";
+        //user selection vars
+        const languageSelect = document.getElementById("languageSelect").value;
+        const generateButton = document.getElementById('generateButton');
+        const vocabInput = document.getElementById('vocab');
 
-        function generateConversationId() {
-            return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
+        generateButton.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const vocab = vocabInput.value;
+        const tense = document.getElementById("tense").value;
 
-        async function loadConversation() {
-            try {
-                const response = await fetch(`/conversation/${conversationId}`);
-                const messages = await response.json();
-                chatContainer.innerHTML = ''; // Clear existing messages
-                messages.forEach(msg => {
-                    addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
-                });
-            } catch (error) {
-                console.error('Error loading conversation:', error);
-            }
-        }
+        // Construct the prompt considering language selection and vocab words
+        const fullPrompt = `Write me a creative narrative in ${languageSelect} that features the following vocabulary words: ${vocab} and focusing on the following verb tenses: ${tense}`;
+        try {
+            aiResponse.innerHTML = "Generating story...";
+            const response = await fetch('http://localhost:3000/narrative/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: fullPrompt }),
+            });
 
-        async function clearChat() {
-            try {
-                await fetch(`/conversation/${conversationId}`, {
-                    method: 'DELETE'
-                });
-                conversationId = generateConversationId();
-                sessionStorage.setItem('conversationId', conversationId);
-                chatContainer.innerHTML = '';
-            } catch (error) {
-                console.error('Error clearing chat:', error);
-            }
-        }
-        
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
 
-            // Disable input and button while processing
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-
-            // Add user message to chat
-            addMessage(message, 'user');
-            messageInput.value = '';
-
-            try {
-                // Create a new message div for AI response with streaming cursor
-                const aiMessageDiv = document.createElement('div');
-                aiMessageDiv.className = 'message ai-message';
-                const cursor = document.createElement('span');
-                cursor.className = 'cursor';
-                aiMessageDiv.appendChild(cursor);
-                chatContainer.appendChild(aiMessageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                // Set up server sent event connection
-                const eventSource = new EventSource(
-                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
-                );
-                let fullResponse = '';
-
-                eventSource.onmessage = (event) => {
-                    if (event.data === '[DONE]') {
-                        eventSource.close();
-                        cursor.remove();
-                    } else {
-                        const chunk = event.data;
-                        fullResponse += chunk;
-                        aiMessageDiv.textContent = fullResponse;
-                        aiMessageDiv.appendChild(cursor);
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                    }
-                };
-
-                eventSource.onerror = (error) => {
-                    console.error('SSE Error:', error);
-                    eventSource.close();
-                    cursor.remove();
-                    if (!fullResponse) {
-                        aiMessageDiv.textContent = 'Sorry, there was an error processing your request.';
-                    }
-                };
-            } catch (error) {
-                console.error('Error:', error);
-                addMessage('Sorry, there was an error processing your request.', 'ai');
+            if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
             }
 
-            // Re-enable input and button
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
+
+            const data = await response.json();
+            const markdown = data.completion;
+            const html = marked.parse(markdown);
+            aiResponse.innerHTML = html;
+            narrativeResponse = html; //store narrative
+            console.log('Server responded', html)
+        } catch (error) {
+            console.error(error);
+            aiResponse.innerHTML = 'Error generating text.';
         }
 
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-            messageDiv.textContent = text;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
 
-        // Allow sending message with Enter key
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+        return false;
         });
 
-        // Initialize conversation when page loads
-        initializeConversation();
+
+
     </script>
 </body>
+
 </html>
