@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>AI Conjugator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -64,8 +64,8 @@
     </style>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <div id="chat-container"></div>
+    <h1>AI Conjugator</h1>
+    <div id="ai-response-container"></div>
     <div id="input-container">
         <input type="text" id="message-input" placeholder="Type your message...">
         <button onclick="sendMessage()" id="send-button">Send</button>
@@ -73,11 +73,51 @@
     </div>
 
     <script>
-        const chatContainer = document.getElementById('chat-container');
+        const aiResponseContainer = document.getElementById('ai-response-container');
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         let conversationId = null;
-        
+   
+        //start of new code
+        sendButton.addEventListener('click', async (event) => {
+        console.log('Button clicked!');
+        event.preventDefault();
+        const vocab = messageInput.value;
+
+        // Construct the prompt considering language selection and vocab words
+        const fullPrompt = `Write me a full list of all the verb conjugations of the following vocab word: ${vocab}`;
+        try {
+            aiResponseContainer.textContent = "Generating conjugations...";
+            const response = await fetch('http://localhost:8080/chat/stream', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: fullPrompt }),
+            });
+
+
+            if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+            }
+
+
+            const data = await response.json();
+            const markdown = data.completion;
+            const html = marked.parse(markdown);
+            aiResponseContainer.innerHTML = html;
+            console.log('Server responded', html)
+        } catch (error) {
+            console.error(error);
+            aiResponseContainer.innerHTML = 'Error generating text.';
+        }
+
+
+        return false;
+        });
+
+        //end of new code
+
         // Load or create conversation ID to persist over page reloads
         async function initializeConversation() {
             conversationId = sessionStorage.getItem('conversationId');
@@ -97,7 +137,7 @@
             try {
                 const response = await fetch(`/conversation/${conversationId}`);
                 const messages = await response.json();
-                chatContainer.innerHTML = ''; // Clear existing messages
+                aiResponseContainer.innerHTML = ''; // Clear existing messages
                 messages.forEach(msg => {
                     addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
                 });
@@ -113,7 +153,7 @@
                 });
                 conversationId = generateConversationId();
                 sessionStorage.setItem('conversationId', conversationId);
-                chatContainer.innerHTML = '';
+                aiResponseContainer.innerHTML = '';
             } catch (error) {
                 console.error('Error clearing chat:', error);
             }
@@ -138,8 +178,8 @@
                 const cursor = document.createElement('span');
                 cursor.className = 'cursor';
                 aiMessageDiv.appendChild(cursor);
-                chatContainer.appendChild(aiMessageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                aiResponseContainer.appendChild(aiMessageDiv);
+                aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
 
                 // Set up server sent event connection
                 const eventSource = new EventSource(
@@ -156,7 +196,7 @@
                         fullResponse += chunk;
                         aiMessageDiv.textContent = fullResponse;
                         aiMessageDiv.appendChild(cursor);
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
                     }
                 };
 
@@ -183,8 +223,8 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
             messageDiv.textContent = text;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            aiResponseContainer.appendChild(messageDiv);
+            aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
         }
 
         // Allow sending message with Enter key

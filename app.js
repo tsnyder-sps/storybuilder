@@ -1,22 +1,21 @@
+//needed for webserver component
 import express from 'express';
-import OpenAI from 'openai';
+//needed for interface to ollama host
+import { Ollama } from 'ollama';
+//filesystem access to static frontend
 import path from 'path';
 
 const app = express();
+//server listen port (under 1024 needs root access w/ sudo)
 const port = 8080;
 
-// Initialize OpenAI client with API key
-const openai = new OpenAI({
-  apiKey: 'unused',
-  baseURL: process.env.OPENAI_API_BASE,
-  defaultHeaders: {
-    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
-    'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
-  }
+// ollama server connection with nodejs library
+const ollama = new Ollama({
+  host: 'http://localhost:11434'
 });
 
-// statically set model (this works for both tensorrt as well as ollama)
-const model = 'llama3.2-vision:latest'
+// statically set model type for ollama responses
+const model = 'llama3.2';
 
 // Conversation/context storage
 const conversations = new Map();
@@ -46,6 +45,8 @@ app.delete('/conversation/:conversationId', (req, res) => {
 app.get('/chat/stream', async (req, res) => {
   try {
     const message = req.query.message;
+    //Maybe this
+    //const message = req.body.prompt;
     const conversationId = req.query.conversationId;
 
     // Get or create conversation history
@@ -61,23 +62,21 @@ app.get('/chat/stream', async (req, res) => {
       'Connection': 'keep-alive'
     });
 
-    // Stream the response from the api
-    const stream = await openai.chat.completions.create({
+    // Stream the response from Ollama
+    const stream = await ollama.chat({
       model: model,
       messages: conversation,
-      max_tokens: 8192,
       stream: true
     });
 
     let aiResponse = '';
 
     for await (const chunk of stream) {
-      if (chunk.choices[0]?.delta?.content) {
-        const content = chunk.choices[0].delta.content;
+      if (chunk.message?.content) {
         // store the AI response
-        aiResponse += content;
+        aiResponse += chunk.message.content;
         // Send each chunk to frontend
-        res.write(`data: ${content}\n\n`);
+        res.write(`data: ${chunk.message.content}\n\n`);
       }
     }
 
