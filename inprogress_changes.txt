@@ -1,0 +1,83 @@
+changes if openai example backend was used
+6c6
+<     <title>Hello World</title>
+---
+>     <title>AI Conjugator</title>
+67,68c67,68
+<     <h1>Hello World</h1>
+<     <div id="chat-container"></div>
+---
+>     <h1>AI Conjugator</h1>
+>     <div id="ai-response-container"></div>
+76c76
+<         const chatContainer = document.getElementById('chat-container');
+---
+>         const aiResponseContainer = document.getElementById('ai-response-container');
+80c80,120
+<         
+---
+>    
+>         //start of new code
+>         sendButton.addEventListener('click', async (event) => {
+>         console.log('Button clicked!');
+>         event.preventDefault();
+>         const vocab = messageInput.value;
+> 
+>         // Construct the prompt considering language selection and vocab words
+>         const fullPrompt = `Write me a full list of all the verb conjugations of the following vocab word: ${vocab}`;
+>         try {
+>             aiResponseContainer.textContent = "Generating conjugations...";
+>             const response = await fetch('http://localhost:8080/chat/stream', {
+>             method: 'POST',
+>             headers: {
+>                 'Content-Type': 'application/json',
+>             },
+>             body: JSON.stringify({ prompt: fullPrompt }),
+>             });
+> 
+> 
+>             if (!response.ok) {
+>             throw new Error(`Server error: ${response.statusText}`);
+>             }
+> 
+> 
+>             const data = await response.json();
+>             const markdown = data.completion;
+>             const html = marked.parse(markdown);
+>             aiResponseContainer.innerHTML = html;
+>             console.log('Server responded', html)
+>         } catch (error) {
+>             console.error(error);
+>             aiResponseContainer.innerHTML = 'Error generating text.';
+>         }
+> 
+> 
+>         return false;
+>         });
+> 
+>         //end of new code
+> 
+100c140
+<                 chatContainer.innerHTML = ''; // Clear existing messages
+---
+>                 aiResponseContainer.innerHTML = ''; // Clear existing messages
+116c156
+<                 chatContainer.innerHTML = '';
+---
+>                 aiResponseContainer.innerHTML = '';
+141,142c181,182
+<                 chatContainer.appendChild(aiMessageDiv);
+<                 chatContainer.scrollTop = chatContainer.scrollHeight;
+---
+>                 aiResponseContainer.appendChild(aiMessageDiv);
+>                 aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+159c199
+<                         chatContainer.scrollTop = chatContainer.scrollHeight;
+---
+>                         aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+186,187c226,227
+<             chatContainer.appendChild(messageDiv);
+<             chatContainer.scrollTop = chatContainer.scrollHeight;
+---
+>             aiResponseContainer.appendChild(messageDiv);
+>             aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
