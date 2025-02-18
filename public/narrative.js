@@ -4,9 +4,10 @@ const languageSelectInput = document.getElementById('language-select');
 const tenseInput = document.getElementById('tense');
 const aiResponse = document.getElementById('airesponse');
 
-generateButton.addEventListener('click', async (event) => {
+generateButton.addEventListener('click', async (e) => {
   console.log('Button clicked!');
-  event.preventDefault(); 
+  e.preventDefault();
+  
   const vocab = vocabInput.value;
   const languageSelect = languageSelectInput.value;
   const tense = tenseInput.value;

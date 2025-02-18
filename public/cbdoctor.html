@@ -28,19 +28,22 @@
   <!-- Main section-->
    <main role="main">
     <div class="application-section">
-      <form id="cbdoctorform" enctype="multipart/form-data">
-        <label for="machine_asset_tag">Enter the 6 digit asset tag from the sticker on the back of the Chromebook</label>
-        <input type="text" name="asset_tag">
-        <br><br>
-        <label for="image_front">Upload image of the screen and keyboard side of your Chromebook:</label>
-        <input type="file" name="image_front" accept=".jpg, .jpeg, .png, .gif">
-        <br><br>
-        <label for="image_back">Upload image of the back side of your Chromebook:</label>
-        <input type="file" name="image_back" accept=".jpg, .jpeg, .png, .gif">
-        <br><br>
-        <button type="submit">Submit images</button>
-      </form>
-      <div id="response" class="response"></div>
+      <div class="grid-item">
+        <form id="cbdoctorform" enctype="multipart/form-data">
+          <label for="asset_tag">Enter the 6 digit asset tag from the sticker on the back of the Chromebook</label>
+          <input type="text" name="asset_tag">
+          <br><br>
+          <label for="image_front">Upload image of the screen and keyboard side of your Chromebook:</label>
+          <input type="file" name="image_front" accept=".jpg, .jpeg, .png, .gif">
+          <br><br>
+          <label for="image_back">Upload image of the back side of your Chromebook:</label>
+          <input type="file" name="image_back" accept=".jpg, .jpeg, .png, .gif">
+          <br><br>
+          <button type="submit">Submit images</button>
+        </form>
+      </div>
+      <div class="grid-item scrollable">
+        <div id='airesponse' class="card"></div>
     </div>
   </main>
     <!-- Footer -->
@@ -68,5 +71,6 @@
       </div>
     </footer>
   <script type="text/javascript" src="cbdoctor.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   </body>
   </html>

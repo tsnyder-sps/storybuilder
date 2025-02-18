@@ -4,7 +4,6 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const app = express();
-const fs = require('fs');
 const port = 3000;
 const OpenAI = require('openai');
 
@@ -14,20 +13,21 @@ app.use(express.static('public'));
 app.use(express.json());
 
 // Setup multer
-const storage = multer.diskStorage({
-  destination: './uploads/', 
-  filename: (req, file, callback) => {
-    const assetTag = req.body.asset_tag;
-    callback(null, assetTag + '-' + file.fieldname + path.extname(file.originalname));
-  }
-});
+const upload = multer({ storage: multer.memoryStorage() });
 
-const upload = multer({ storage: storage });
-
-// Setup OpenAI client with API key
+// Setup OpenAI clients with API key
 const openaiT = new OpenAI({
   apiKey: 'unused',
   baseURL: 'https://api-tensor.scarboroughschools.org/v1',
+  defaultHeaders: {
+    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
+  }
+});
+
+const openaiV = new OpenAI({
+  apiKey: 'unused',
+  baseURL: 'https://api-vlm.scarboroughschools.org/v1',
   defaultHeaders: {
     'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
     'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
@@ -42,46 +42,23 @@ app.post('/complete', async (req, res) => {
   try {
     const { prompt = promptReq, max_tokens = 8192, model = "llama3.2" } = req.body;
 
-    // Validate the prompt
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required." });
-    };
+    }
 
-    console.log('before completion');
-    // // Call OpenAI API
     const completion = await openaiT.chat.completions.create({
       model: model,
       max_tokens: max_tokens,
       messages: [{ role: "user", content: prompt }],
-      stream: true,
+      stream: false,
     });
 
-    // for await (const chunk of completion) {
-    //   console.log(chunk.choices[0].delta.content);
-    // };
-    
-    let aiResponse = '';
-
-    for await (const chunk of completion) {
-      if (chunk.choices[0]?.delta?.content) {
-        const content = chunk.choices[0].delta.content;
-        // store the AI response
-        aiResponse += content;
-        // Send each chunk to frontend
-        // res.write(`data: ${content}\n\n`);
-        console.log(aiResponse);
-        
-      }
-    }
-    
     res.json({
-      completion: aiResponse,
+      completion: completion.choices[0].message.content, // Direct access to content
     });
 
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
-
-    // You can check for specific error types (e.g., from OpenAI)
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
@@ -93,46 +70,31 @@ app.post('/complete', async (req, res) => {
 // Narrative generation endpoints
 app.post('/narrative/generate', async (req, res) => {
   const systemPrompt = "You are a highschool language teacher, and you want your students to read an interesting story to help learn the language. You want the stories to contain vocabulary words and verb tenses that match their high school expirience level";
-  const userPrompt = req.body.prompt; // Get the prompt from the request body
-  console.log("User prompt:", userPrompt); // Log the received prompt
+  const userPrompt = req.body.prompt;
+  console.log("User prompt:", userPrompt);
   try {
     console.log("Sending request using local openAI API...");
-    const { prompt = "json.stringify(bodyPrompt)", model = "llama3.2" } = req.body;
-    
-    // Validate the prompt
+    const { prompt = userPrompt, max_tokens = 8192, model = "llama3.2" } = req.body; // Simplified prompt handling
+
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required." });
-    };
-    // const fetch = (await import('node-fetch')).default;
+    }
 
-    // Call OpenAI API
     const completion = await openaiT.chat.completions.create({
       messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: userPrompt
-        }
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
       ],
       model: model,
       stream: false,
-      max_tokens: 8192
+      max_tokens: max_tokens
     });
 
-    const responseData = await completion.choices[0].message.content;
-
-    console.log(responseData);
-
     res.json({
-      completion: responseData,
+      completion: completion.choices[0].message.content,
     });
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
-
-    // You can check for specific error types (e.g., from OpenAI)
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
     } else {
@@ -141,58 +103,63 @@ app.post('/narrative/generate', async (req, res) => {
   }
 });
 
+// Chromebook Doctor endpoint (handling two images)
+app.post('/chromebook-doctor', upload.fields([
+  { name: 'image_front', maxCount: 1 },
+  { name: 'image_back', maxCount: 1 }
+]), async function (req, res) {
+  if (!req.body.asset_tag) {
+      return res.status(400).json({ error: "Missing asset_tag property" });
+  }
+
+  const assetTag = req.body.asset_tag;
+  const systemPrompt = "You are an IT field technician, and you maintain a fleet of laptop devices for students in a high school. You can identify damage to a device by looking at an image of it's screen, keyboard, external case, and hinges. You rate the overall damage to the device on a scale from 1 - 100.";
+  const userPrompt = `Analyze these images and determine if the computer is damaged in any way. Provide a detailed summary of the damage, and provide your rating`;
+
+  try {
+      if (!req.files || !req.files.image_front || !req.files.image_back) {
+          return res.status(400).json({ error: "Both image_front and image_back are required." });
+      }
+
+      const frontImage = req.files.image_front[0];
+      const backImage = req.files.image_back[0];
 
 
-// Chromebook Doctor endpoints
+      const base64FrontImage = `data:${frontImage.mimetype};base64,${frontImage.buffer.toString('base64')}`;
+      const base64BackImage = `data:${backImage.mimetype};base64,${backImage.buffer.toString('base64')}`;
 
-//store base64 images
-var frontBase64String = '';
-var backBase64String = '';
-
-app.post('/chromebook-doctor', upload.any(), function (req, res, next) {
-  const assetTag = req.body.asset_tag
-  console.log(req.files, req.body); // Upload information is stored in req.file and text field in req.body
-  res.json({ message: `File uploaded sucessfully for asset tag ${assetTag}` });
-  //get base64 strings
-  fs.readFile(`uploads/${assetTag}-image_front.jpg`, (err, data) => {
-    if (err) {
-      console.log(err);
-    } else {
-      frontBase64String = data.toString('base64');
-      //move on to read the next file
-      fs.readFile(`uploads/${assetTag}-image_back.jpg`, (err, data) => {
-        if (err) {
-          console.log(err);
-        } else {
-          backBase64String = data.toString('base64');
-          //now have both images, can send off to ollama here
-          const fullPrompt = `Analyze these images and determine if they are damaged in any way. Provide a detailed summary of the damage, and provide a rating for the condition of the device on a scale of 1 to 100`;
-       
-          try {
-           const response = fetch('http://localhost:3000/api/generate', {
-             method: 'POST',
-             headers: {
-               'Content-Type': 'application/json',
-             },
-             body: JSON.stringify({ prompt: fullPrompt }),
-           });
-           setTimeout(() => {
-            if (!response.ok) {
-              throw new Error(`Server error: ${response.statusText}`);
-            }
-    
-            const data = response.json();
-            responseDiv.innerHTML = data.response; // Directly set the innerHTML
-           }, 120 * 1000);
-         } catch (error) {
-           console.error(error);
-           responseDiv.textContent = 'Error generating text.';
-         }
-        }
+      const completion = await openaiV.chat.completions.create({
+          messages: [
+              { role: "system", content: systemPrompt },
+              {
+                  role: "user",
+                  content: [
+                      { type: "text", text: userPrompt },
+                      { type: "image_url", image_url: { url: base64FrontImage } },
+                      { type: "image_url", image_url: { url: base64BackImage } }
+                  ]
+              }
+          ],
+          model: "llava", //  Specify your multimodal model here!
+          stream: false,
+          max_tokens: 256
       });
-    }
-    
-  });
+
+      res.json({
+          completion: completion.choices[0].message.content,
+      });
+
+  } catch (error) {
+      console.error("Error calling OpenAI API: ", error);
+      if (error.response) {
+          res.status(error.response.status).json(error.response.data);
+      } else if (error.request) {
+          console.error("No response received:", error.request);
+          res.status(500).json({ error: "No response from server" });
+      } else {
+          res.status(500).json({ error: "Internal server error" });
+      }
+  }
 });
 
 // Start the server
