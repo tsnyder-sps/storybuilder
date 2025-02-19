@@ -15,6 +15,7 @@
     "child_process": "^1.0.2",
     "cloudflared": "^0.6.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "http": "^0.0.1-security",
     "json-stringify-safe": "^5.0.1",
