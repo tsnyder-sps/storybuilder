@@ -25,7 +25,7 @@ const openaiT = new OpenAI({
 });
 
 //generates a quiz for the given narrative
-app.post('/frq/grade', async (req, res) => {
+app.post('/writing/analzye', async (req, res) => {
   const promptReq = req.body.prompt;
   try {
     const { prompt = promptReq, max_tokens = 8192, model = "llama3.2" } = req.body;

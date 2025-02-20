@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>FRQ grader</title>
+    <title>Writing analysis tool</title>
     <style>
         button {background-color:#FF0000;border-radius:10%;color:white;font-family:'Times New Roman'}
         input {background-color:#000000;border-radius:10%;color:white;font-family:'Times New Roman'}
@@ -11,71 +11,60 @@
 </head>
 <body>
         
-    <!-- enter question and scoring guidelines-->
-    <label id="questionLabel"
-    style="position:absolute;top:8vh;left:5vw;width:43vw;height:3vh;">
-    Enter the FRQ question here:</label>
-    <textarea id="questionInputArea"
-    style="resize:none;position:absolute;top:12vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <label id="guidelinesLabel"
-    style="position:absolute;top:35vh;left:5vw;width:43vw;height:3vh;">
-    Enter the FRQ scoring guideline here:</label>
-    <textarea id="guidelinesInputArea"
-    style="resize:none;position:absolute;top:39vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <label id="answerLabel"
-    style="position:absolute;top:62vh;left:5vw;width:43vw;height:3vh;">
-    Enter the student's answer here:</label>
-    <textarea id="answerInputArea"
-    style="position:absolute;top:66vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <button id="uploadInput"
-    style="position:absolute;top:88vh;left:19vw;width:13vw;height:5vh;font-size:20px;">
-    Grade answer</button>
+   <!-- top page info-->
+    <h1 id="siteName"
+    style="position:absolute;top:-3vh;left:1vw;font-size:5vh;">
+    This page can give you feedback on your writing!</h1>
 
     <!-- prompt interaction area-->
-    <label id="aiResponseLabel"
-    style="position:absolute;top:8vh;left:52vw;width:43vw;height:3vh;">
-    The AI will score the student and give feedback about their answer here:</label>
+    <textarea id="studentInputArea" 
+    style="resize:none;position:absolute;top:10vh;left:5vw;width:43vw;height:78vh;">
+    Enter your text here for analysis.</textarea>
+    <button id="studentInputUpload"
+    style="position:absolute;top:90vh;left:10vw;width:33vw;height:5vh;text-align:center;font-size:3.7vh;">
+    Begin analysis of text</button>
     <textarea id="aiResponseAreaBackground" readonly 
-    style="color:black;position:absolute;top:12vh;left:52vw;width:43vw;height:74vh;resize:none;">
+    style="color:black;position:absolute;top:10vh;left:52vw;width:43vw;height:85vh;resize:none;">
     </textarea>
     <div id="aiResponseArea"
-    style="color:white;position:absolute;top:13vh;left:52.3vw;width:43vw;height:74vh;word-wrap:break-word;">
+    style="color:white;position:absolute;top:11vh;left:52.3vw;width:43vw;height:85vh;word-wrap:break-word;">
     </div>
+    <label type="text" id="languageLabel"
+    style="position:absolute;top:2vh;left:85vw;width:5vw;height:3vh;font-size:1vw;">
+    Language:</label>
+    <select name="language" id="languageSelect"
+    style="font-family:Times New Roman;position:absolute;left:90.5vw;top:2vh;height:3vh;width:5vw;color:white;background-color:black;">
+        <option value="french">French</option>
+        <option value="spanish">Spanish</option>
+        <option value="english">English</option>
+    </select>
+
     <!--scripts-->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         //startup
         //startup defaults
-        document.getElementById("questionInputArea").value = "";
-        document.getElementById("guidelinesInputArea").value = "";
-        document.getElementById("answerInputArea").value = "";
-        document.getElementById("aiResponseArea").innerHTML = '';
+        //startup defaults
+        document.getElementById("studentInputArea").value = "Enter your text here for analysis.";
+        document.getElementById("aiResponseArea").innerHTML = 'The AI will underline errors in your writing here.';
+
         //user selection vars
         const aiResponseArea = document.getElementById("aiResponseArea");
-        ////////////////////////////////grade quiz
-        uploadInput.addEventListener('click', async (event) => {
+        ////////////////////////////////analyze writing
+        studentInputUpload.addEventListener('click', async (event) => {
         event.preventDefault();
         //grab user inputs
-        var questionInput = document.getElementById("questionInputArea").value;
-	    var guidelinesInput = document.getElementById("guidelinesInputArea").value;
-	    var answerInput = document.getElementById("answerInputArea").value;
-	    var fullPrompt = "Assume the role of a hardcore high school AP teacher. " 
-		+"Score students harshly, that is, if they do not fully satisfy a criteria in the scoring guidelines, do not give them the point. "
-		+"State the number of points that the student earned out of the total possible points in the problem. After this, do not restate the total number of possible points. "
-		+"Use HTML tags for formatting and not markdown."
-        +"Score the following student answer to an AP free response question using the provided scoring guidelines.\n"
-		+"Here is the free response question: " + questionInput + "\n"
-		+"Here is the student answer to that question: " + answerInput + "\n"
-		+"Here are the scoring guidelines for that question: " + guidelinesInput + "\n"
-		+"Return the score of the student and an explanation of why the student received that score.";
+        var currentLang = document.getElementById("languageSelect").value;
+        var userText = document.getElementById("studentInputArea").value;
 
+        var fullPrompt = "Assume the role of a high school " + currentLang + " teacher. Using only html tags, underline gramatical errors in the provided text. "
+		+"Make sure to underline errors of verb conjugation, verb tense, subject-verb agreement, and adjective agreement. "
+		+"After returning the underlined text, explain why each gramatical error was marked in english."
+	    +"Here is the attached text: " + userText;
         
         try {
-            aiResponseArea.innerHTML = "Grading FRQ...";
-            const response = await fetch('http://localhost:3000/frq/grade', {
+            aiResponseArea.innerHTML = "Analyzing writing...";
+            const response = await fetch('http://localhost:3000/writing/analzye', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -102,7 +91,7 @@
 
         return false;
         });
-        //////////////////////////////////end grade frq
+        //////////////////////////////////end analyze writing
         
 
     </script>
