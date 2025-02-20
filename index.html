@@ -67,7 +67,7 @@
     <h1>AI Conjugator</h1>
     <div id="ai-response-container"></div>
     <div id="input-container">
-        <input type="text" id="message-input" placeholder="Type your message...">
+        <input type="text" id="message-input" placeholder="Type the french vocab word you want to conjugate...">
         <button onclick="sendMessage()" id="send-button">Send</button>
         <button onclick="clearChat()" id="clear-button">Clear Context</button>
     </div>
@@ -85,7 +85,7 @@
         const vocab = messageInput.value;
 
         // Construct the prompt considering language selection and vocab words
-        const fullPrompt = `Write me a full list of all the verb conjugations of the following vocab word: ${vocab}`;
+        const fullPrompt = `Write me a full list of all the verb conjugations of the following french vocab word: ${vocab}. Do not give any additional context words, just give the conjugations of this word along with the associated pronouns. There should be no english words in this response.`;
         try {
             aiResponseContainer.textContent = "Generating conjugations...";
             const response = await fetch('http://localhost:8080/chat/stream', {
@@ -159,8 +159,15 @@
             }
         }
         
+        //Beginning of second code involving response
+
         async function sendMessage() {
             const message = messageInput.value.trim();
+
+            //start of new code
+            const fullPrompt = `Write me a full list of all the verb conjugations of the following french vocab word: ${message}. Do not give any additional context words, just give the conjugations of this word along with the associated pronouns. There should be no english words in this response.`;
+            //end of new code
+
             if (!message) return;
 
             // Disable input and button while processing
@@ -168,6 +175,8 @@
             sendButton.disabled = true;
 
             // Add user message to chat
+
+            //changed message to fullPrompt
             addMessage(message, 'user');
             messageInput.value = '';
 
@@ -183,7 +192,8 @@
 
                 // Set up server sent event connection
                 const eventSource = new EventSource(
-                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
+                    //changed message to fullPrompt
+                    `/chat/stream?message=${encodeURIComponent(fullPrompt)}&conversationId=${conversationId}`
                 );
                 let fullResponse = '';
 
@@ -218,6 +228,8 @@
             sendButton.disabled = false;
             messageInput.focus();
         }
+
+        //End of second code involving response
 
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
