@@ -6,6 +6,19 @@ const path = require('path');
 const app = express();
 const port = 3000;
 const OpenAI = require('openai');
+require('dotenv').config({ path: './.cf_access.env'});
+
+// DEBUG ENV
+// console.log('Process environment variables:');
+// console.log(process.env);
+
+// console.log('\nLoading.env file:');
+// require('dotenv').config();
+// console.log('After loading.env file:');
+// console.log(process.env);
+
+// console.log('\nContents of.env file:');
+// console.log(require('fs').readFileSync('.env', 'utf8'));
 
 // Setup express
 app.use(cors());
@@ -25,8 +38,8 @@ app.listen(port, () => {
     apiKey: 'unused',
     baseURL: 'https://api-tensor.scarboroughschools.org/v1',
     defaultHeaders: {
-      'CF-Access-Client-Id': '4e92f913e23c8b4d90f105a6743b973b.access',
-      'CF-Access-Client-Secret': '5fb066e549e35c1402be297749f41f48bad66c7ae8b592fcbfef616242b5bcdf'
+      'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+      'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
     }
   });
 
@@ -34,8 +47,8 @@ app.listen(port, () => {
     apiKey: 'unused',
     baseURL: 'https://api-vlm.scarboroughschools.org/v1',
     defaultHeaders: {
-      'CF-Access-Client-Id': '4e92f913e23c8b4d90f105a6743b973b.access',
-      'CF-Access-Client-Secret': '5fb066e549e35c1402be297749f41f48bad66c7ae8b592fcbfef616242b5bcdf'
+      'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+      'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
     }
   });
 
@@ -118,8 +131,13 @@ app.listen(port, () => {
     }
 
     const assetTag = req.body.asset_tag;
-    const systemPrompt = "You are an IT field technician, and you maintain a fleet of laptop devices for students in a high school. You can identify damage to a device by looking at an images. Students are sending you 2 images, one of the front of the laptop containing the screen and keyboard, and one of the back of the device containing the bottom of the case and back of the screen. You rate the overall damage to the device on a scale from 1 - 100 with lower numbers indicating more damage.";
-    const userPrompt = `Analyze these images and determine if the computer is damaged in any way. Provide a detailed summary of the damage, and provide your overall rating. If your overall damage rating is 60 or below, or any of the components appear to be broken, begin your response with the statement PLEASE VISIT THE IT OFFICE FOR ADDITIONAL INSPECTION in all bold`;
+    const systemPrompt = "You are an IT field technician, and you maintain a fleet of laptop devices for students in a high school. \
+      You can identify damage to a device by looking at an images. Students are sending you 2 images, one of the front of the laptop \
+      containing the screen and keyboard, and one of the back of the device containing the bottom of the case and back of the screen. \
+      You rate the overall damage to the device on a scale from 1 - 100 with lower numbers indicating more damage.";
+    const userPrompt = `Analyze these images and determine if the computer is damaged in any way. Provide a detailed summary of the damage, \
+      and provide your overall rating. If your overall damage rating is 60 or below, or any of the components appear to be broken, begin your response \
+      with the statement PLEASE VISIT THE IT OFFICE FOR ADDITIONAL INSPECTION in all bold`;
 
     try {
         if (!req.files || !req.files.image_front || !req.files.image_back) {
