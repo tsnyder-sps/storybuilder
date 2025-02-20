@@ -22,7 +22,7 @@ button.onclick = async function(){
         throw new Error(`Server error: ${response.statusText}`);
     }
     //Need other things here that I don't quite understand what they do
-
+    //hello
     response.textContent = aiContent;
 
     }
