@@ -1,6 +1,6 @@
 html, body{
     height: 100%;
-    min-width: 320px;
+    min-width: 1px;
 }
 
 body{
@@ -9,11 +9,10 @@ body{
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     margin: 0px;
     padding: 0px;
-    min-width: 320px;
+    min-width: 1px;
 }
 
 #flexContainer{
-    border: solid red;
     margin-top: 0px;
     margin-bottom: 0px;
     margin-left: 10%;
@@ -23,20 +22,20 @@ body{
 
 h1{
     font-weight: bold;
-    font-size: 50px;
+    font-size: 100px;
     text-align: center;
     padding: 0px;
     margin: 0px;
-    border: solid green;
-    
+    margin-top: 20%;
+    margin-bottom: 20%;
+    animation: fade-down 1.0s;
 }
 
 h2{
     font-size: 20px;
     text-align: center;
-    margin: 0px;
+    margin: 10px;
     padding: 0px;
-    border: solid yellow;
 }
 
 #userInput{
@@ -57,18 +56,63 @@ h2{
 
 #submitter{
     border: none;
-    width: 10%;
+    width: 125px;
     height: 45px;
     border-radius: 5px;
     background-color: #0873ff;
     color: white;
     font-weight: bold;
     font-size: 15px;
-    margin-left: 45%;
-    margin-right: 45%;
-    margin-top: 5px;
+    margin: 10px;
+}
+
+#submitter:hover{
+    background-color: #084fac;
+    box-shadow: 0px 0px 10px white;
+    transition: box-shadow 0.75s ease-in-out
+}
+
+.wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fade-up 1.5s;
 }
 
 #response{
     margin: 0px;
+}
+
+@keyframes fade-up{
+    0% {
+        opacity: 0;
+        transform: translateY(90px) scale(0.5);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+    }
+}
+
+@keyframes fade-down{
+    0% {
+        opacity: 0;
+        transform: translateY(-90px) scale(0.5);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+    }
+}
+
+@keyframes swell {
+    0% {
+        box-shadow: 0px 0px 0px white;
+    }
+
+    100% {
+        box-shadow: 0px 3px 15px white;
+    }
 }

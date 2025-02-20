@@ -1,4 +1,4 @@
-const userInput = document.getElementById("userInput");
+const input = document.getElementById("userInput");
 
 function resize(){
     this.style.height = 'auto';
@@ -6,4 +6,4 @@ function resize(){
     console.log("Height changed");
 }
 
-userInput.addEventListener('input', resize);
+input.addEventListener('input', resize);
