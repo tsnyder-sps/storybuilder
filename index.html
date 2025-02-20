@@ -209,7 +209,7 @@
 
 
             if (!response2.ok) {
-            throw new Error(`Server error: ${response.statusText}`);
+            throw new Error(`Server error: ${response2.statusText}`);
             }
 
 
@@ -240,7 +240,8 @@
             await loadConversation();
         }
         async function initializeConversation2() {
-            conversationId2 = sessionStorage.getItem('conversationId');
+            //potential error thing below with conversationId2 from sessionStorage
+            conversationId2 = sessionStorage.getItem('conversationId2');
             if (!conversationId2) {
                 conversationId2 = generateConversationId2();
                 sessionStorage.setItem('conversationId2', conversationId2);
@@ -270,10 +271,10 @@
         }
         async function loadConversation2() {
             try {
-                const response = await fetch(`/conversation/${conversationId2}`);
-                const messages = await response.json();
-                aiResponseContainer.innerHTML = ''; // Clear existing messages
-                messages.forEach(msg => {
+                const response2 = await fetch(`/conversation/${conversationId2}`);
+                const messages2 = await response2.json();
+                aiResponseContainer2.innerHTML = ''; // Clear existing messages
+                messages2.forEach(msg => {
                     addMessage2(msg.content, msg.role === 'user' ? 'user' : 'ai');
                 });
             } catch (error) {
@@ -452,11 +453,11 @@
             aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
         }
         function addMessage2(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-            messageDiv.textContent = text;
-            aiResponseContainer.appendChild(messageDiv);
-            aiResponseContainer.scrollTop = aiResponseContainer2.scrollHeight;
+            const messageDiv2 = document.createElement('div');
+            messageDiv2.className = `message ${sender}-message`;
+            messageDiv2.textContent = text;
+            aiResponseContainer2.appendChild(messageDiv2);
+            aiResponseContainer2.scrollTop = aiResponseContainer2.scrollHeight;
         }
 
         // Allow sending message with Enter key
