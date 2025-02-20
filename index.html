@@ -102,10 +102,11 @@
         document.getElementById("questionCount").value = 10;
         document.getElementById("questionOptionCount").value = 4;
         //user selection vars
-        const languageSelect = document.getElementById("languageSelect").value;
+        var languageSelect = document.getElementById("languageSelect").value;
         const generateButton = document.getElementById('generateButton');
         const vocabInput = document.getElementById('vocab');
         const aiResponse = document.getElementById("aiResponse");
+        const quizGenerationButton = document.getElementById("quizGenerateButton");
         //allow user to select what info is displayed
         function loadNarrative(){
             if(narrativeResponse != ""){
@@ -125,9 +126,66 @@
                 "Please use the buttons on the left to generate a quiz.";
             }
         }
+        ////////////////////////////////generate quiz
+        quizGenerateButton.addEventListener('click', async (event) => {
+        event.preventDefault();
+        //grab user inputs
+        languageSelect = document.getElementById("languageSelect").value
+        const numQuestions = document.getElementById("questionCount").value;
+        const numOptions = document.getElementById("questionOptionCount").value;
+        // Construct the prompt considering user inputs about language,verbs,vocab,etc
+        if(numQuestions < 1 ){  //check for invalid mandatory fields
+            aiResponse.innerHTML = "The number of questions must be at least 1.";
+            return;
+        }
+        else if(numOptions == ""){
+            aiResponse.innerHTML = "The number of options per question must be at least 2.";
+            return;
+        }
+        else if(narrativeResponse == ""){
+            aiResponse.innerHTML = "You must first generate a narrative before you can generate a quiz.";
+            return;
+        }
+        var fullPrompt = `Generate a multiple choice quiz in ${languageSelect} with ${numQuestions} questions that each have ${numOptions} answer choices that is about the following narrative: ${narrativeResponse}.`;
+        fullPrompt = fullPrompt + ". Use sequential letters of the roman alphabet to denote answer options. Place the HTML tag <br> before the letter denoting each answer option. Use sequential numbers to denote the questions. Place an answer key after the quiz.";
+        console.log("sent out this prompt: " + fullPrompt);
+        
+        try {
+            aiResponse.innerHTML = "Generating quiz...";
+            const response = await fetch('http://localhost:3000/narrative/quiz', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: fullPrompt }),
+            });
+
+
+            if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+            }
+
+
+            const data = await response.json();
+            const markdown = data.completion;
+            const html = marked.parse(markdown);
+            aiResponse.innerHTML = html;
+            quizResponse = html; //store quiz
+            console.log('Server responded', html)
+        } catch (error) {
+            console.error(error);
+            aiResponse.innerHTML = 'Error generating text.';
+        }
+
+
+        return false;
+        });
+        //////////////////////////////////end generate quiz
         ////////////////////////////////generate narrative
         generateButton.addEventListener('click', async (event) => {
         event.preventDefault();
+        //grab user inputs
+        languageSelect = document.getElementById("languageSelect").value
         const vocab = vocabInput.value;
         const tense = document.getElementById("tense").value;
         const additionalInfo = document.getElementById("options").value;
