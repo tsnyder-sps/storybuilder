@@ -25,7 +25,7 @@ const openaiT = new OpenAI({
 });
 
 //generates a quiz for the given narrative
-app.post('/narrative/quiz', async (req, res) => {
+app.post('/frq/grade', async (req, res) => {
   const promptReq = req.body.prompt;
   try {
     const { prompt = promptReq, max_tokens = 8192, model = "llama3.2" } = req.body;
@@ -70,54 +70,7 @@ app.post('/narrative/quiz', async (req, res) => {
   }
 });
 
-// generates a narrative using given info
-app.post('/narrative/generate', async (req, res) => {
-    const promptReq = req.body.prompt;
-    try {
-      const { prompt = promptReq, max_tokens = 8192, model = "llama3.2" } = req.body;
-  
-      // Validate the prompt
-      if (!prompt) {
-        return res.status(400).json({ error: "Prompt is required." });
-      };
-  
-      // // Call OpenAI API
-      const completion = await openaiT.chat.completions.create({
-        model: model,
-        max_tokens: max_tokens,
-        messages: [{ role: "user", content: prompt }],
-        stream: true,
-      });
-     
-      let aiResponse = '';
-
-      for await (const chunk of completion) {
-        if (chunk.choices[0]?.delta?.content) {
-          const content = chunk.choices[0].delta.content;
-          // store the AI response
-          aiResponse += content;
-        }
-      }
-     
-      res.json({
-        completion: aiResponse,
-      });
-  
-  
-    } catch (error) {
-      console.error("Error calling OpenAI API:", error);
-  
-      // You can check for specific error types (e.g., from OpenAI)
-      if (error.response) {
-        res.status(error.response.status).json(error.response.data);
-      } else {
-        res.status(500).json({ error: "Internal server error" });
-      }
-    }
-  });
-  
-
 // run application
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-  });
+  console.log(`Server running at http://localhost:${port}`);
+});
