@@ -89,9 +89,9 @@
             }
 
 
-            const data = await response.json();
+            const data = await response.json();  //receive ai response
             const markdown = data.completion;
-            const html = marked.parse(markdown);
+            const html = marked.parse(markdown);  //format response
             aiResponseArea.innerHTML = html;
             console.log('Server responded', html)
         } catch (error) {

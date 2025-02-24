@@ -45,7 +45,7 @@ app.post('/frq/grade', async (req, res) => {
    
     let aiResponse = '';
 
-    for await (const chunk of completion) {
+    for await (const chunk of completion) {  //read response tokens
       if (chunk.choices[0]?.delta?.content) {
         const content = chunk.choices[0].delta.content;
         // store the AI response
