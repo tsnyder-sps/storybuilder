@@ -109,7 +109,7 @@
         const quizGenerationButton = document.getElementById("quizGenerateButton");
         //allow user to select what info is displayed
         function loadNarrative(){
-            if(narrativeResponse != ""){
+            if(narrativeResponse != ""){  //make sure narrative exists
                 document.getElementById("aiResponse").innerHTML = narrativeResponse;
             }
             else{
@@ -118,7 +118,7 @@
             }
         }
         function loadQuiz(){
-            if(quizResponse != ""){
+            if(quizResponse != ""){  //make sure quiz exists
                 document.getElementById("aiResponse").innerHTML = quizResponse;
             }
             else{
@@ -166,9 +166,9 @@
             }
 
 
-            const data = await response.json();
+            const data = await response.json();  //receive ai response
             const markdown = data.completion;
-            const html = marked.parse(markdown);
+            const html = marked.parse(markdown);  //format response
             aiResponse.innerHTML = html;
             quizResponse = html; //store quiz
             console.log('Server responded', html)
@@ -225,9 +225,9 @@
             }
 
 
-            const data = await response.json();
+            const data = await response.json();  //receive ai response
             const markdown = data.completion;
-            const html = marked.parse(markdown);
+            const html = marked.parse(markdown);  //format response
             aiResponse.innerHTML = html;
             narrativeResponse = html; //store narrative
             console.log('Server responded', html)

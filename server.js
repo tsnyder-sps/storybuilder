@@ -19,7 +19,7 @@ const openaiT = new OpenAI({
   apiKey: 'unused',
   baseURL: 'https://api-tensor.scarboroughschools.org/v1',
   defaultHeaders: {
-    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,  //hide keys for security
     'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
   }
 });
@@ -45,7 +45,7 @@ app.post('/narrative/quiz', async (req, res) => {
    
     let aiResponse = '';
 
-    for await (const chunk of completion) {
+    for await (const chunk of completion) {  //read response tokens
       if (chunk.choices[0]?.delta?.content) {
         const content = chunk.choices[0].delta.content;
         // store the AI response
@@ -91,7 +91,7 @@ app.post('/narrative/generate', async (req, res) => {
      
       let aiResponse = '';
 
-      for await (const chunk of completion) {
+      for await (const chunk of completion) {  //read response tokens
         if (chunk.choices[0]?.delta?.content) {
           const content = chunk.choices[0].delta.content;
           // store the AI response
