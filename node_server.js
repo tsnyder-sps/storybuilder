@@ -8,18 +8,6 @@ const port = 3000;
 const OpenAI = require('openai');
 require('dotenv').config({ path: './.cf_access.env'});
 
-// DEBUG ENV
-// console.log('Process environment variables:');
-// console.log(process.env);
-
-// console.log('\nLoading.env file:');
-// require('dotenv').config();
-// console.log('After loading.env file:');
-// console.log(process.env);
-
-// console.log('\nContents of.env file:');
-// console.log(require('fs').readFileSync('.env', 'utf8'));
-
 // Setup express
 app.use(cors());
 app.use(express.static('public'));
