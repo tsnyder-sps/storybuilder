@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Narrative generator</title>
+    <style>
+        button {background-color:#FF0000;border-radius:10%;color:white;font-family:'Times New Roman'}
+        input {background-color:#000000;border-radius:10%;color:white;font-family:'Times New Roman'}
+        textarea {background-color:#000000;color:white;font-family:'Times New Roman'}
+        label {background-color:#000000;color:white;font-family:'Times New Roman';font-size:1.3vw;}
+    </style>
+</head>
+<body>
+    <!--top header labels-->
+    <label id="narrativeLabel"
+    style="position:absolute;top:1vh;left:2vw;height:6vh;width:44vw;font-size:2.8vw;">
+    Generate a narrative here:</label>
+    <label id="responseLabel"
+    style="position:absolute;top:1vh;left:52vw;height:6vh;width:44vw;font-size:2.8vw;">
+    Results will appear here:</label>
+    <!--ai response elements from server-->
+    <textarea id="aiResponseBackground" readonly
+    style="color:white;resize:none;position:absolute;top:8vh;left:55vw;width:40vw;height:80vh;">
+    </textarea>
+    <div id="aiResponse"
+    style="overflow:auto;position:absolute;top:9vh;left:56vw;height:79vh;width:39vw;color:white;">
+    </div>
+    <!--user inputs for narrative-->
+    <label id="vocabLabel"
+    style="position:absolute;top:8vh;left:5vw;height:4vh;width:40vw;">
+    Enter comma seperated target vocab here:</label>
+    <textarea id="vocab"
+    style="resize:none;position:absolute;top:13vh;left:5vw;height:12vh;width:40vw;">
+    </textarea>
+    <label id="tenseLabel"
+    style="position:absolute;top:29vh;left:5vw;height:4vh;width:40vw;">
+    Enter comma seperated target verb conjugations here:</label>
+    <textarea id="tense"
+    style="resize:none;position:absolute;top:34vh;left:5vw;height:12vh;width:40vw;">
+    </textarea>
+    <label id="optionsLabel"
+    style="position:absolute;top:50vh;left:5vw;height:4vh;width:40vw;">
+    Enter additional instructions here (leave blank if none):</label>
+    <textarea id="options"
+    style="resize:none;position:absolute;top:55vh;left:5vw;height:12vh;width:40vw;">
+    </textarea>
+    <label id="paragraphLabel"
+    style="position:absolute;left:7vw;top:69vh;width:10vw;height:3vh;font-size:1vw;">
+    Number of paragraphs:</label>
+    <input type="number" id="paragraphCount" min="1" max="1000"
+    style="position:absolute;top:69vh;left:17.5vw;width:3vw;height:2.7vh;">
+    </input>
+    <label id="languageLabel"
+    style="position:absolute;top:69vh;left:23vw;width:10vw;height:3vh;font-size:1vw;">
+    Target language:</label>
+    <select name="language" id="languageSelect"
+    style="font-family:Times New Roman;position:absolute;left:33.5vw;top:69vh;height:3vh;width:5vw;color:white;background-color:black;">
+        <option value="french">French</option>
+        <option value="spanish">Spanish</option>
+        <option value="english">English</option>
+    </select>
+    <!--user select actions-->
+    <button id="generateButton"
+    style="position:absolute;top:73vh;left:10vw;height:5.3vh;width:30vw;font-size:2vw;">
+    Generate narrative</button>
+    <button id="quizGenerateButton"
+    style="position:absolute;top:91vh;left:10vw;height:5.3vh;width:30vw;font-size:2vw;">
+    Generate MCQ quiz</button>
+    <button id="selectNarrative" onclick="loadNarrative()"
+    style="position:absolute;left:58vw;top:90vh;width:15vw;height:5vh;font-size:1.5vw;">
+    View narrative</button>
+    <button id="selectQuiz" onclick="loadQuiz()"
+    style="position:absolute;left:78vw;top:90vh;width:15vw;height:5vh;font-size:1.5vw">
+    View quiz</button>
+    <!--user inputs for quiz-->
+    <label id="quizLabel"
+    style="position:absolute;top:81vh;left:5vw;height:4vh;width:40vw;">
+    Generate an MCQ quiz about the narrative:</label>
+    <label id="questionsLabel"
+    style="position:absolute;top:86vh;left:7vw;height:3vh;width:10vw;font-size:1vw;">
+    Number of questions:</label>
+    <input type="number" id="questionCount" min="1" max="100"
+    style="position:absolute;top:86vh;left:17.5vw;width:3vw;height:2.7vh;">
+    </input>
+    <label id="questionOptionLabel"
+    style="position:absolute;top:86vh;left:23vw;width:14vw;height:3vh;font-size:1vw;">
+    Number of options per question:</label>
+    <input type="number" id="questionOptionCount" min="2" max="6"
+    style="position:absolute;top:86vh;left:37.5vw;width:3vw;height:2.7vh;">
+    </input>
+    <!--scripts-->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        //response storage vars
+        var narrativeResponse = "";
+        var quizResponse = "";
+        //startup
+        document.getElementById("aiResponseBackground").value = ""; //default fields to empty
+        document.getElementById("tense").value = "";
+        document.getElementById("vocab").value = "";
+        document.getElementById("options").value = "";
+        document.getElementById("paragraphCount").value = 5; //default field counts
+        document.getElementById("questionCount").value = 10;
+        document.getElementById("questionOptionCount").value = 4;
+        //user selection vars
+        var languageSelect = document.getElementById("languageSelect").value;
+        const generateButton = document.getElementById('generateButton');
+        const vocabInput = document.getElementById('vocab');
+        const aiResponse = document.getElementById("aiResponse");
+        const quizGenerationButton = document.getElementById("quizGenerateButton");
+        //allow user to select what info is displayed
+        function loadNarrative(){
+            if(narrativeResponse != ""){  //make sure narrative exists
+                document.getElementById("aiResponse").innerHTML = narrativeResponse;
+            }
+            else{
+                document.getElementById("aiResponse").innerHTML = "There is no narrative to display.<br>"+
+                "Please use fill in the text fields on the left and select a language in which to generate a narrative.";
+            }
+        }
+        function loadQuiz(){
+            if(quizResponse != ""){  //make sure quiz exists
+                document.getElementById("aiResponse").innerHTML = quizResponse;
+            }
+            else{
+                document.getElementById("aiResponse").innerHTML = "There is no quiz to display.<br>" + 
+                "Please use the buttons on the left to generate a quiz.";
+            }
+        }
+        ////////////////////////////////generate quiz
+        quizGenerateButton.addEventListener('click', async (event) => {
+        event.preventDefault();
+        //grab user inputs
+        languageSelect = document.getElementById("languageSelect").value
+        const numQuestions = document.getElementById("questionCount").value;
+        const numOptions = document.getElementById("questionOptionCount").value;
+        // Construct the prompt considering user inputs about language,verbs,vocab,etc
+        if(numQuestions < 1 ){  //check for invalid mandatory fields
+            aiResponse.innerHTML = "The number of questions must be at least 1.";
+            return;
+        }
+        else if(numOptions == ""){
+            aiResponse.innerHTML = "The number of options per question must be at least 2.";
+            return;
+        }
+        else if(narrativeResponse == ""){
+            aiResponse.innerHTML = "You must first generate a narrative before you can generate a quiz.";
+            return;
+        }
+        var fullPrompt = `Generate a multiple choice quiz in ${languageSelect} with ${numQuestions} questions that each have ${numOptions} answer choices that is about the following narrative: ${narrativeResponse}.`;
+        fullPrompt = fullPrompt + ". Use sequential letters of the roman alphabet to denote answer options. Place the HTML tag <br> before the letter denoting each answer option. Use sequential numbers to denote the questions. Place an answer key after the quiz.";
+        console.log("sent out this prompt: " + fullPrompt);
+        
+        try {
+            aiResponse.innerHTML = "Generating quiz...";
+            const response = await fetch('http://localhost:3000/narrative/quiz', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: fullPrompt }),
+            });
+
+
+            if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+            }
+
+
+            const data = await response.json();  //receive ai response
+            const markdown = data.completion;
+            const html = marked.parse(markdown);  //format response
+            aiResponse.innerHTML = html;
+            quizResponse = html; //store quiz
+            console.log('Server responded', html)
+        } catch (error) {
+            console.error(error);
+            aiResponse.innerHTML = 'Error generating text.';
+        }
+
+
+        return false;
+        });
+        //////////////////////////////////end generate quiz
+        ////////////////////////////////generate narrative
+        generateButton.addEventListener('click', async (event) => {
+        narrativeResponse = "";
+        event.preventDefault();
+        //grab user inputs
+        languageSelect = document.getElementById("languageSelect").value
+        const vocab = vocabInput.value;
+        const tense = document.getElementById("tense").value;
+        const additionalInfo = document.getElementById("options").value;
+        const numParagraphs = document.getElementById("paragraphCount").value;
+
+        // Construct the prompt considering user inputs about language,verbs,vocab,etc
+        var fullPrompt = "";
+        if(vocab == ""){  //check for blank mandatory fields
+            aiResponse.innerHTML = "The target vocab box cannot be blank.";
+            return;
+        }
+        else if(tense == ""){
+            aiResponse.innerHTML = "The target verb conjugations box cannot be blank.";
+            return;
+        }
+        var fullPrompt = `Write me a creative narrative in ${languageSelect} that features the following vocabulary words: ${vocab}. The narrative may only use the following verb tenses: ${tense}. The narrative must be only ${numParagraphs} paragraphs long.`;
+        if(additionalInfo != ""){ //user gave extra info
+            fullPrompt = fullPrompt + " Here are some additional instructions for the narrative: " + additionalInfo;
+        }
+        fullPrompt = fullPrompt + ". Return only the narrative.";
+        console.log("sent out this prompt: " + fullPrompt);
+        
+        try {
+            aiResponse.innerHTML = "Generating narrative...";
+            const response = await fetch('http://localhost:3000/narrative/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt: fullPrompt }),
+            });
+
+
+            if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+            }
+
+
+            const data = await response.json();  //receive ai response
+            const markdown = data.completion;
+            const html = marked.parse(markdown);  //format response
+            aiResponse.innerHTML = html;
+            narrativeResponse = html; //store narrative
+            console.log('Server responded', html)
+        } catch (error) {
+            console.error(error);
+            aiResponse.innerHTML = 'Error generating text.';
+        }
+
+
+        return false;
+        });
+        ///////////////////////////////////end generate narrative
+
+
+    </script>
+</body>
+
+</html>
