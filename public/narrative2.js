@@ -37,7 +37,7 @@ function loadQuiz() {
   }
 }
 ////////////////////////////////generate quiz
-quizGenerateButton.addEventListener("click", async (event) => {
+quizGenerationButton.addEventListener("click", async (event) => {
   event.preventDefault();
   //grab user inputs
   languageSelect = document.getElementById("languageSelect").value;

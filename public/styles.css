@@ -107,7 +107,7 @@ nav a:hover {
   color: #ffcc00;
 }
 
-.app-section h1 {
+.app-section-title h1 {
   text-align: center;
 }
 
@@ -167,6 +167,13 @@ button:hover {
 .application-section-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-gap: 20px;
+  padding: 20px;
+}
+
+.application-section-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   grid-gap: 20px;
   padding: 20px;
 }

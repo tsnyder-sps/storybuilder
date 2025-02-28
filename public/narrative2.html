@@ -25,11 +25,10 @@
     </div>
   </header>
 <!-- Application section -->
-  <main role="main">
-    <div class="app-section">
-      <h1 class="app-section">Story & Quiz Generator</h1>
-    </div>
-    <div class="grid-item">
+  <main role="main" class="scrollable">
+    <div class="app-section-title"><h1 class="app-section">Story & Quiz Generator</h1></div>
+    <div class="application-grid">
+      <div class="grid-item">
         <div class="card">
             <label id="narrativeLabel">Generate a narrative here:</label>
             <br>
@@ -55,31 +54,33 @@
             <br>
             <!--user select actions-->
             <button id="generateButton">Generate narrative</button>
-            <button id="quizGenerateButton">Generate MCQ quiz</button>
         </div>
-    </div>
-            <!--user inputs for quiz-->
-            <label id="quizLabel">
-                Generate an MCQ quiz about the narrative:</label>
-            <label id="questionsLabel">
-                Number of questions:</label>
-            <input type="number" id="questionCount" min="1" max="100"></input>
-            <label id="questionOptionLabel">
-                Number of options per question:</label>
-            <input type="number" id="questionOptionCount" min="2" max="6"></input>
-        </form>
-    </div>
-    <div>
-        <form>
-            <label id="responseLabel">Results will appear here:</label>
-            <div id="aiResponseBackground"></div>
-            <div id="aiResponse"></div>
-            <!--ai response elements from server-->
-            <button id="selectNarrative" onclick="loadNarrative()">
-                View narrative</button>
-            <button id="selectQuiz" onclick="loadQuiz()">
-                View quiz</button>
-        </form>
+      </div>
+      <div class="grid-item">
+        <div class="card">
+          <!--user inputs for quiz-->
+          <label id="quizLabel">Generate an MCQ quiz about the narrative:</label><br>
+          <label id="questionsLabel" for="questionCount">
+              Number of questions:</label>
+          <input type="number" id="questionCount" min="1" max="100"></input><br>
+          <br>
+          <label id="questionOptionLabel" for="questionOptionCount">
+              Number of options per question:</label>
+          <input type="number" id="questionOptionCount" min="2" max="6"></input><br>
+          <br>
+          <button id="quizGenerateButton">Generate MCQ quiz</button>
+        </div>
+      </div>
+      <div class="grid-item">
+        <div class="card">
+          <label id="responseLabel">Results will appear here:</label>
+          <!--ai response elements from server-->
+          <div id="aiResponseBackground"></div>
+          <div id="aiResponse"></div>
+          <button id="selectNarrative" onclick="loadNarrative()">View narrative</button>
+          <button id="selectQuiz" onclick="loadQuiz()">View quiz</button>
+        </div>
+      </div>
     </div>
   </main>
 <!-- Footer section -->
