@@ -10,7 +10,11 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: #333;
-  background-color: #f7f7f7;
+  background-color: #c9d2db;
+  display: flex;
+  flex-direction: column;
+  /* min-height: 100vh; Ensure body takes full viewport height */
+  margin: 0; /* Remove default body margin */
 }
 
 h1 {
@@ -107,8 +111,22 @@ nav a:hover {
   color: #ffcc00;
 }
 
+.app-section-title {
+  grid-column: 1 / -1;
+  padding: 10px;
+}
+
 .app-section-title h1 {
   text-align: center;
+}
+
+main[role="main"] {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 207px; /* Add padding to make space for the footer */
+  box-sizing: border-box; /*Very important*/
 }
 
 /* Application Grid Styles */
@@ -120,10 +138,48 @@ nav a:hover {
   padding: 20px;
 }
 
+.application-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-gap: 20px;
+  padding: 20px;
+}
+
+.full-card-main {
+  flex-grow: 1; /* Allow main to expand and fill available space */
+  display: flex;
+  justify-content: center; /*Optional, centers the card*/
+  align-items: center; /*Optional, centers the card*/
+}
+
+.main-card {
+  width: 90%; /*Or any width you want, such as 95vw*/
+  /* max-width: 1600px; optional max width */
+  flex-grow: 1; /*Allows the card to grow to the main's size*/
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  overflow: auto; /*Makes the card scrollable*/
+  margin: 20px 20px; /*Adds margin around the card*/
+}
+
 .grid-item {
   max-height: 450px;
 }
 
+.grid-item-ext {
+  max-height: 900px;
+}
+
+.sxs {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
 .scrollable {
   overflow: auto;
 }
@@ -196,8 +252,8 @@ label {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1em;
-  line-height: 1em;
+  font-size: 1.25em;
+  line-height: 1.5em;
 }
 
 input {
@@ -206,9 +262,39 @@ input {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 0.75em;
-  line-height: 1em;
-  background-color: #f7f7f7;
+  font-size: 1em;
+  line-height: 1.25em;
+  background-color: #e6e1cf;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+textarea {
+  margin: 0 0 10px;
+  padding: 0;
+  display: block;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1em;
+  line-height: 1.25em;
+  background-color: #e6e1cf;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+select {
+  margin: 0 0 10px;
+  padding: 0;
+  display: block;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1em;
+  line-height: 1.25em;
+  background-color: #e6e1cf;
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -216,11 +302,28 @@ input {
 }
 
 .response {
-  background-color: #fff;
+  margin: 0 0 10px;
+  padding: 0;
+  display: block;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 700;
+  font-size: 1em;
+  line-height: 1.25em;
+  background-color: #e6e1cf;
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.aiResponse {
+  margin: 0 0 10px;
+  padding: 0;
+  display: block;
+  font-family: "Open Sans", sans-serif;
+  font-size: 1.25em;
+  line-height: 1.5em;
+  padding: 20px;
 }
 
 /* Footer Styles */
@@ -234,10 +337,6 @@ footer {
   color: #fff;
   padding: 30px 20px 20px;
   text-align: center;
-}
-
-footer + * {
-  margin-top: 100px;
 }
 
 footer a {
@@ -292,6 +391,11 @@ footer a:hover {
 
 .shshdLocationInfo > div {
   text-align: left;
+}
+
+.shshdLocationInfo.shshdAddressBlock {
+  display: flex;
+  flex-direction: row;
 }
 
 .shshdLocationInfo.shshdAddress {
