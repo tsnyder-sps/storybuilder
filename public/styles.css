@@ -252,8 +252,8 @@ label {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1.25em;
-  line-height: 1.5em;
+  font-size: 0.75em;
+  line-height: 1em;
 }
 
 input {
@@ -262,10 +262,10 @@ input {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1em;
-  line-height: 1.25em;
+  font-size: 0.75em;
+  line-height: 1em;
   background-color: #e6e1cf;
-  padding: 20px;
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -277,8 +277,8 @@ textarea {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1em;
-  line-height: 1.25em;
+  font-size: 0.75em;
+  line-height: 1em;
   background-color: #e6e1cf;
   padding: 20px;
   border: 1px solid #ddd;
@@ -292,10 +292,10 @@ select {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1em;
-  line-height: 1.25em;
+  font-size: 0.75em;
+  line-height: 1em;
   background-color: #e6e1cf;
-  padding: 20px;
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -307,8 +307,8 @@ select {
   display: block;
   font-family: "Open Sans", sans-serif;
   font-weight: 700;
-  font-size: 1em;
-  line-height: 1.25em;
+  font-size: 0.75em;
+  line-height: 1em;
   background-color: #e6e1cf;
   padding: 20px;
   border: 1px solid #ddd;
@@ -321,8 +321,8 @@ select {
   padding: 0;
   display: block;
   font-family: "Open Sans", sans-serif;
-  font-size: 1.25em;
-  line-height: 1.5em;
+  font-size: 0.75em;
+  line-height: 1em;
   padding: 20px;
 }
 
