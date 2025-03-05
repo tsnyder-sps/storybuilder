@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Writing analysis tool</title>
+    <style>
+      button {
+        background-color: #ff0000;
+        border-radius: 10%;
+        color: white;
+        font-family: "Times New Roman";
+      }
+      input {
+        background-color: #000000;
+        border-radius: 10%;
+        color: white;
+        font-family: "Times New Roman";
+      }
+      textarea {
+        background-color: #000000;
+        color: white;
+        font-family: "Times New Roman";
+      }
+      label {
+        background-color: #000000;
+        color: white;
+        font-family: "Times New Roman";
+        font-size: 1.3vw;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- top page info-->
+    <h1
+      id="siteName"
+      style="position: absolute; top: -3vh; left: 1vw; font-size: 5vh"
+    >
+      This page can give you feedback on your writing!
+    </h1>
+
+    <!-- prompt interaction area-->
+    <textarea
+      id="studentInputArea"
+      style="
+        resize: none;
+        position: absolute;
+        top: 10vh;
+        left: 5vw;
+        width: 43vw;
+        height: 78vh;
+      "
+    >
+    Enter your text here for analysis.</textarea
+    >
+    <button
+      id="studentInputUpload"
+      style="
+        position: absolute;
+        top: 90vh;
+        left: 10vw;
+        width: 33vw;
+        height: 5vh;
+        text-align: center;
+        font-size: 3.7vh;
+      "
+    >
+      Begin analysis of text
+    </button>
+    <textarea
+      id="aiResponseAreaBackground"
+      readonly
+      style="
+        color: black;
+        position: absolute;
+        top: 10vh;
+        left: 52vw;
+        width: 43vw;
+        height: 85vh;
+        resize: none;
+      "
+    >
+    </textarea>
+    <div
+      id="aiResponseArea"
+      style="
+        overflow: auto;
+        color: white;
+        position: absolute;
+        top: 11vh;
+        left: 52.3vw;
+        width: 43vw;
+        height: 85vh;
+        word-wrap: break-word;
+      "
+    ></div>
+    <label
+      type="text"
+      id="languageLabel"
+      style="
+        position: absolute;
+        top: 2vh;
+        left: 85vw;
+        width: 5vw;
+        height: 3vh;
+        font-size: 1vw;
+      "
+    >
+      Language:</label
+    >
+    <select
+      name="language"
+      id="languageSelect"
+      style="
+        font-family: Times New Roman;
+        position: absolute;
+        left: 90.5vw;
+        top: 2vh;
+        height: 3vh;
+        width: 5vw;
+        color: white;
+        background-color: black;
+      "
+    >
+      <option value="french">French</option>
+      <option value="spanish">Spanish</option>
+      <option value="english">English</option>
+    </select>
+
+    <!--scripts-->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      //startup
+      //startup defaults
+      //startup defaults
+      document.getElementById("studentInputArea").value =
+        "Enter your text here for analysis.";
+      document.getElementById("aiResponseArea").innerHTML =
+        "The AI will underline errors in your writing here.";
+
+      //user selection vars
+      const aiResponseArea = document.getElementById("aiResponseArea");
+      ////////////////////////////////analyze writing
+      studentInputUpload.addEventListener("click", async (event) => {
+        event.preventDefault();
+        //grab user inputs
+        var currentLang = document.getElementById("languageSelect").value;
+        var userText = document.getElementById("studentInputArea").value;
+
+        var fullPrompt =
+          "Assume the role of a high school " +
+          currentLang +
+          " teacher. Using only html tags, underline gramatical errors in the provided text. " +
+          "Make sure to underline errors of verb conjugation, verb tense, subject-verb agreement, and adjective agreement. " +
+          "After returning the underlined text, explain why each gramatical error was marked in english." +
+          "Here is the attached text: " +
+          userText;
+
+        try {
+          aiResponseArea.innerHTML = "Analyzing writing...";
+          const response = await fetch(
+            "http://localhost:3000/writing/analzye",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ prompt: fullPrompt }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.statusText}`);
+          }
+
+          const data = await response.json(); //receive ai response
+          const markdown = data.completion;
+          const html = marked.parse(markdown); //format response
+          aiResponseArea.innerHTML = html;
+          console.log("Server responded", html);
+        } catch (error) {
+          console.error(error);
+          aiResponseArea.innerHTML = "Error generating text.";
+        }
+
+        return false;
+      });
+      //////////////////////////////////end analyze writing
+    </script>
+  </body>
+</html>

@@ -75,7 +75,7 @@ app.listen(port, () => {
     }
   });
 
-  // Narrative generation endpoints
+  // Old Narrative generation endpoints
   app.post("/narrative_old/generate", async (req, res) => {
     const systemPrompt =
       "You are a highschool language teacher, and you want your students to read an interesting story to help learn the language. You want the stories to contain vocabulary words and verb tenses that match their high school expirience level";
@@ -190,7 +190,7 @@ app.listen(port, () => {
     }
   );
 
-  //generates a quiz for the given narrative
+  //Matthew's narrative quiz generation endpoint
   app.post("/narrative/quiz", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
@@ -239,8 +239,57 @@ app.listen(port, () => {
     }
   });
 
-  // generates a narrative using given info
+  // Matthew's narrative generation endpoint
   app.post("/narrative/generate", async (req, res) => {
+    const promptReq = req.body.prompt;
+    try {
+      const {
+        prompt = promptReq,
+        max_tokens = 8192,
+        model = "llama3.2",
+      } = req.body;
+
+      // Validate the prompt
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required." });
+      }
+
+      // // Call OpenAI API
+      const completion = await openaiT.chat.completions.create({
+        model: model,
+        max_tokens: max_tokens,
+        messages: [{ role: "user", content: prompt }],
+        stream: true,
+      });
+
+      let aiResponse = "";
+
+      for await (const chunk of completion) {
+        //read response tokens
+        if (chunk.choices[0]?.delta?.content) {
+          const content = chunk.choices[0].delta.content;
+          // store the AI response
+          aiResponse += content;
+        }
+      }
+
+      res.json({
+        completion: aiResponse,
+      });
+    } catch (error) {
+      console.error("Error calling OpenAI API:", error);
+
+      // You can check for specific error types (e.g., from OpenAI)
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Internal server error" });
+      }
+    }
+  });
+
+  // Matthew's writing analysis endpoint
+  app.post("/writing/analzye", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
       const {
