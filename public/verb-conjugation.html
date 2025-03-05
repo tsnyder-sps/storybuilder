@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHS AI Tools</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="img/SPSletterlogo.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+  <!-- Header Section -->
+  <header role="banner">
+    <nav role="navigation">
+      <ul>
+        <li><a href="index_2.html">HOME</a></li>
+        <li><a href="world-language.html">WORLD LANGUAGE</a></li>
+        <li><a href="https://chat.scarboroughschools.org/" target="_blank">CHAT</a></li>
+      </ul>
+    </nav>
+    <div class="hero-container">
+      <div class="hero">
+        <!-- <img src="img/hero-background.jpg" alt="Hero Background Image" aria-label="SHS AI Tools Hero Image"> -->
+        <h1>World Language AI Tools</h1>
+      </div>
+    </div>
+  </header>
+<!-- Application section -->
+  <main role="main" class="full-card-main">
+    <div class="main-card-2col">
+      <div class="app-section-title">
+        <h1 class="app-section">Verb Conjugation Tool</h1>
+      </div>
+      <div class="left-column">
+        <div id="conjugation-help" class="page">
+          <h1>Conjugator</h1>
+          <div id="input-container">
+            <input type="text" id="message-input" placeholder="Type the french vocab word you want to conjugate...">
+            <button onclick="sendMessage()" id="send-button">Send</button>
+            <button onclick="clearChat()" id="clear-button">Clear Context</button>
+          </div>
+        </div>
+        <div id="conjugation-practice" class="page">
+          <h1>Conjugation Practice</h1>
+          <div id="ai-response-container2"></div>
+          <div id="input-container2">
+            <input type="text" id="message-input2" placeholder="Type about what you want to practice...">
+            <button onclick="sendMessage2()" id="send-button2">Send</button>
+            <button onclick="clearChat2()" id="clear-button2">Clear Context</button>
+          </div>
+        </div>
+      </div>
+      <div class="right-column">
+        <div id="ai-response-container"></div>
+      </div>
+    </div>
+  </main>
+<!-- Footer section -->
+  <footer role="contentinfo" id="shshdFooter" class="shshdFooter">
+    <div class="shshdBanner">
+      <div class="shshdElement shshdLocationElement shshdSingleItem school-details-container shshdThumbnailAlignLeft shshdThumbnailOriginal shshdThumbnailSmall">
+        <article class="shshdLocationSingleItem">
+          <div class="shshdThumbnail">
+            <a class="shshdLocationLink" href="https://www.scarboroughschools.org">
+              <img src="img/Help-Desk-Logo-Final.png" alt="SHSHD Logo" loading="lazy" style="height: 50px; width: 50px;"/>
+            </a>
+          </div>
+          <div class="shshdLocationInfo">
+            <div class="shshdTitle shshdLocationName">
+              <a href="https://www.scarboroughschools.org">Scarborough Red Storm Student Help Desk</a>
+            </div>
+            <div class="shshdAddressBlock">
+              <div class="shshdAddress shshdAddress-1">11 Municipal Dr </div>
+              <div class="shshdCity">Scarborough, </div>
+              <div class="shshdState">ME, </div>
+              <div class="shshdZip">04074</div>
+            </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </footer>
+  <script type="text/javascript" src="verb-conjugation.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</body>
+</html>
+</body>
+</html>

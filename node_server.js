@@ -7,6 +7,7 @@ const app = express();
 const port = 3000;
 const OpenAI = require("openai");
 require("dotenv").config({ path: "./.cf_access.env" });
+const Ollama = require('ollama').Ollama;
 
 // Setup express
 app.use(cors());
@@ -19,6 +20,14 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Start the server
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
+
+  // ollama server connection with nodejs library
+  const ollama = new Ollama({
+    host: 'http://localhost:11434'
+    });
+
+  // statically set model type for ollama responses
+  const model = 'llama3.2';
 
   // Setup OpenAI clients with API key
   const openaiT = new OpenAI({
@@ -336,4 +345,76 @@ app.listen(port, () => {
       }
     }
   });
+
+  ////////////////////////////////////// Begin Aditya's Verb conjugation endpoint
+  // Conversation/context storage
+  const conversations = new Map();
+  
+  // Get conversation history
+  app.get('/conversation/:conversationId', (req, res) => {
+    const { conversationId } = req.params;
+    const conversation = conversations.get(conversationId) || [];
+    res.json(conversation);
+  });
+
+  // Clear conversation
+  app.delete('/conversation/:conversationId', (req, res) => {
+    const { conversationId } = req.params;
+    conversations.delete(conversationId);
+    res.sendStatus(200);
+  });
+  
+  // Streaming chat endpoint using server sent events
+  app.get('verb/chat/stream', async (req, res) => {
+  try {
+    const message = req.query.message;
+    //Maybe this
+    //const message = req.body.prompt;
+    const conversationId = req.query.conversationId;
+
+    // Get or create conversation history
+    let conversation = conversations.get(conversationId) || [];
+
+    // Add user message to history
+    conversation.push({ role: 'user', content: message });
+
+    // Set headers for streamed messages to web browser
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+
+    // Stream the response from Ollama
+    const stream = await ollama.chat({
+      model: model,
+      messages: conversation,
+      stream: true
+    });
+
+    let aiResponse = '';
+
+    for await (const chunk of stream) {
+      if (chunk.message?.content) {
+        // store the AI response
+        aiResponse += chunk.message.content;
+        // Send each chunk to frontend
+        res.write(`data: ${chunk.message.content}\n\n`);
+      }
+    }
+
+    // Add complete AI response to conversation context
+    conversation.push({ role: 'assistant', content: aiResponse });
+    conversations.set(conversationId, conversation);
+
+    // mark end of streaming response
+    res.write('data: [DONE]\n\n');
+  } catch (error) {
+    console.error('Streaming Error:', error);
+    res.write('data: Error processing request\n\n');
+  } finally {
+    res.end();
+  }
+  });
+  ////////////////////////////////////// End Aditya's Verb conjugation endpoint
 });
