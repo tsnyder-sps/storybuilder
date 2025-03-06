@@ -1,21 +1,27 @@
-//needed for webserver component
 import express from 'express';
-//needed for interface to ollama host
-import { Ollama } from 'ollama';
-//filesystem access to static frontend
+import OpenAI from 'openai';
 import path from 'path';
+import dotenv from 'dotenv';
 
-const app = express();
-//server listen port (under 1024 needs root access w/ sudo)
-const port = 8080;
-
-// ollama server connection with nodejs library
-const ollama = new Ollama({
-  host: 'http://localhost:11434'
+dotenv.config({
+  path: "./.stuff.env"
 });
 
-// statically set model type for ollama responses
-const model = 'llama3.1:8b-instruct-q6_K'
+const app = express();
+const port = 8080;
+
+// Initialize OpenAI client with API key
+const openai = new OpenAI({
+  apiKey: 'unused',
+  baseURL: process.env.OPENAI_API_BASE,
+  defaultHeaders: {
+    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
+  }
+});
+
+// statically set model (this works for both tensorrt as well as ollama)
+const model = 'llama3.2-vision:latest'
 
 // Conversation/context storage
 const conversations = new Map();
@@ -23,9 +29,7 @@ const conversations = new Map();
 app.use(express.json());
 
 // serve static html frontend index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'index.html'));
-});
+app.use(express.static("public"));
 
 // Get conversation history
 app.get('/conversation/:conversationId', (req, res) => {
@@ -60,21 +64,23 @@ app.get('/chat/stream', async (req, res) => {
       'Connection': 'keep-alive'
     });
 
-    // Stream the response from Ollama
-    const stream = await ollama.chat({
+    // Stream the response from the api
+    const stream = await openai.chat.completions.create({
       model: model,
       messages: conversation,
+      max_tokens: 8192,
       stream: true
     });
 
     let aiResponse = '';
 
     for await (const chunk of stream) {
-      if (chunk.message?.content) {
+      if (chunk.choices[0]?.delta?.content) {
+        const content = chunk.choices[0].delta.content;
         // store the AI response
-        aiResponse += chunk.message.content;
+        aiResponse += content;
         // Send each chunk to frontend
-        res.write(`data: ${chunk.message.content}\n\n`);
+        res.write(`data: ${content}\n\n`);
       }
     }
 
@@ -92,9 +98,8 @@ app.get('/chat/stream', async (req, res) => {
   }
 });
 
+
 // run application
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });
-
-

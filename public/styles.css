@@ -1,6 +1,6 @@
 html, body{
     height: 100%;
-    margin: 0px;
+    min-width: 1px;
 }
 
 body{
@@ -9,7 +9,7 @@ body{
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
     margin: 0px;
     padding: 0px;
-    border: solid red
+    min-width: 1px;
 }
 
 #flexContainer{
@@ -63,13 +63,13 @@ h2{
     color: white;
     font-weight: bold;
     font-size: 15px;
-    margin-top: 20%;
+    margin: 10px;
 }
 
 #submitter:hover{
     background-color: #084fac;
     box-shadow: 0px 0px 10px white;
-    transition: box-shadow 0.5s ease-in-out
+    transition: box-shadow 0.75s ease-in-out
 }
 
 .wrapper{
@@ -80,11 +80,6 @@ h2{
 }
 
 #response{
-    margin: 0px;
-}
-
-p{
-    border: solid yellow;
     margin: 0px;
 }
 
