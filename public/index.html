@@ -1,200 +1,99 @@
 <!DOCTYPE html>
-<html>
-<<<<<<< HEAD
+<html lang="en">
 <head>
-  <title>SCARBOROUGH HIGH SCHOOL AI TOOLS</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center; /* Center align content */
-    }
-
-    h1 {
-      margin-top: 50px;
-      font-size: 3em;
-    }
-
-    .button-container {
-      display: flex; /* Use flexbox for arrangement */
-      justify-content: center; /* Center horizontally */
-      align-items: center; /* Center vertically */
-      height: 300px; /* Adjust height as needed */
-    }
-
-    .large-button {
-      background-color: #007bff; /* Example: Blue color */
-      color: white;
-      padding: 30px 60px; /* Adjust padding for size */
-      font-size: 2em; /* Adjust font size for size */
-      margin: 20px; /* Space between buttons */
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
-    }
-
-    .large-button:hover {
-      opacity: 0.8;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHS AI Tools</title>
+  <link rel="icon" type="image/png" sizes="16x16" href="img/SPSletterlogo.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
 <body>
-
-  <h1>SCARBOROUGH HIGH SCHOOL AI TOOLS</h1>
-
-  <div class="button-container">
-    <a href="spanish.html"><button class="large-button">SPANISH TOOLS</button></a>
-    <a href="cbdoctor.html"><button class="large-button">CHROMEBOOK DOCTOR</button></a>
-    <button class="large-button">Button 3</button>
-    <button class="large-button">Button 4</button>
-  </div>
-
-</body>
-=======
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
-    <title>replit</title>
-    <link href="styles.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <div id="flexContainer">
-      <h1>Hello!</h1>
-      <div class="wrapper">
-        <h2>What can we help you with today? </h2>
-        <textarea id="userInput" type="text" placeholder="Ask us for help with homework..."></textarea>
-        <button id="submitter" onclick="sendMessage()" type="submit">Submit</button>
+  <!-- Header Section -->
+  <header role="banner">
+    <nav role="navigation">
+      <ul>
+        <li><a href="index.html">HOME</a></li>
+        <li><a href="https://chat.scarboroughschools.org/" target="_blank">CHAT</a></li>
+      </ul>
+    </nav>
+    <div class="hero-container">
+      <div class="hero">
+        <!-- <img src="img/hero-background.jpg" alt="Hero Background Image" aria-label="SHS AI Tools Hero Image"> -->
+        <h1>Welcome to SHS AI Tools</h1>
       </div>
     </div>
-    <p id="response"></p>
-    <script src="stylesHelper.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-      const chatContainer = document.getElementById('response');
-        const messageInput = document.getElementById('userInput');
-        const sendButton = document.getElementById('submitter');
-        let conversationId = null;
-        
-        // Load or create conversation ID to persist over page reloads
-        async function initializeConversation() {
-            conversationId = sessionStorage.getItem('conversationId');
-            if (!conversationId) {
-                conversationId = generateConversationId();
-                sessionStorage.setItem('conversationId', conversationId);
-            }
-            // Load existing messages
-            await loadConversation();
-        }
-
-        function generateConversationId() {
-            return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        }
-
-        async function loadConversation() {
-            try {
-                const response = await fetch(`/conversation/${conversationId}`);
-                const messages = await response.json();
-                chatContainer.innerHTML = ''; // Clear existing messages
-                messages.forEach(msg => {
-                    addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
-                });
-            } catch (error) {
-                console.error('Error loading conversation:', error);
-            }
-        }
-
-        async function clearChat() {
-            try {
-                await fetch(`/conversation/${conversationId}`, {
-                    method: 'DELETE'
-                });
-                conversationId = generateConversationId();
-                sessionStorage.setItem('conversationId', conversationId);
-                chatContainer.innerHTML = '';
-            } catch (error) {
-                console.error('Error clearing chat:', error);
-            }
-        }
-        
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            // Disable input and button while processing
-            messageInput.disabled = true;
-            sendButton.disabled = true;
-
-            // Add user message to chat
-            addMessage(message, 'user');
-            messageInput.value = '';
-
-            try {
-                // Create a new message div for AI response with streaming cursor
-                const aiMessageDiv = document.createElement('div');
-                aiMessageDiv.className = 'message ai-message';
-                const cursor = document.createElement('span');
-                cursor.className = 'cursor';
-                aiMessageDiv.appendChild(cursor);
-                chatContainer.appendChild(aiMessageDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                // Set up server sent event connection
-                const eventSource = new EventSource(
-                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
-                );
-                let fullResponse = '';
-
-                eventSource.onmessage = (event) => {
-                    if (event.data === '[DONE]') {
-                        eventSource.close();
-                        cursor.remove();
-                    } else {
-                        const chunk = event.data;
-                        fullResponse += chunk;
-                        aiMessageDiv.textContent = fullResponse;
-                        aiMessageDiv.appendChild(cursor);
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                    }
-                };
-
-                eventSource.onerror = (error) => {
-                    console.error('SSE Error:', error);
-                    eventSource.close();
-                    cursor.remove();
-                    if (!fullResponse) {
-                        aiMessageDiv.textContent = 'Sorry, there was an error processing your request.';
-                    }
-                };
-            } catch (error) {
-                console.error('Error:', error);
-                addMessage('Sorry, there was an error processing your request.', 'ai');
-            }
-
-            // Re-enable input and button
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
-        }
-
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-            messageDiv.textContent = text;
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        // Allow sending message with Enter key
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        // Initialize conversation when page loads
-        initializeConversation();
-    </script>
-  </body>
->>>>>>> origin/Ryan
+    <div id='responseDiv'></div>
+  </header>
+  <!-- Application Grid -->
+  <main role="main">
+    <div class="application-grid">
+      <div class="grid-item">
+        <div class="card">
+          <div class="icon">
+            <i class="fa fa-globe"></i>
+          </div>
+          <h2>World Language Tools</h2>
+          <p>Tools created for world language classes.</p><br>
+          <button id="worldLanguageExplore">Explore</button>
+        </div>
+      </div>
+      <div class="grid-item">
+        <div class="card">
+          <div class="icon">
+            <i class="fa fa-flask"></i>
+          </div>
+          <h2>Science Tools</h2>
+          <p>Tools created for science classes.</p><br>
+          <button id="scienceExplore">Explore</button>
+        </div>
+      </div>
+      <div class="grid-item">
+        <div class="card">
+          <div class="icon">
+            <i class="fa fa-laptop"></i>
+          </div>
+          <h2>IT Utilities</h2>
+          <p>Chromebook Doctor</p><br>
+          <button id="itLearnMore">Learn More</button>
+        </div>
+      </div>
+      <div class="grid-item">
+        <div class="card">
+          <div class="icon">
+            <i class="fa fa-comments"></i>
+          </div>
+          <h2>Open Chat Window</h2>
+          <p>Open the AI Chat agent</p><br>
+          <button id="aiChatOpen">Open</button>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Footer -->
+  <footer role="contentinfo" id="shshdFooter" class="shshdFooter">
+    <div class="shshdBanner">
+      <div class="shshdElement shshdLocationElement shshdSingleItem school-details-container shshdThumbnailAlignLeft shshdThumbnailOriginal shshdThumbnailSmall">
+        <article class="shshdLocationSingleItem">
+          <div class="shshdThumbnail">
+            <a class="shshdLocationLink" href="https://www.scarboroughschools.org">
+              <img src="img/Help-Desk-Logo-Final.png" alt="SHSHD Logo" loading="lazy" />
+            </a>
+          </div>
+          <div class="shshdLocationInfo">
+            <div class="shshdTitle shshdLocationName">
+              <a href="https://www.scarboroughschools.org">Scarborough Red Storm Student Help Desk</a>
+            </div>
+            <div class="shshdAddress shshdAddress-1">11 Municipal Dr</div>
+            <div class="shshdCity">Scarborough, </div>
+            <div class="shshdState">Maine</div>
+            <div class="shshdZip">04074</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </footer>
+<script src="index_2.js"></script>
+</body>
 </html>

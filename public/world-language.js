@@ -13,7 +13,7 @@ narrativeAppLaunch.addEventListener("click", function () {
 
 // Launch conjugator app
 conjugatorAppLaunch.addEventListener("click", function () {
-  window.location.href = "/verb-tense.html";
+  window.location.href = "/verb-conjugation.html";
   console.log("Button clicked!");
 });
 

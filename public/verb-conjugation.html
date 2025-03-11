@@ -33,18 +33,26 @@
       </div>
       <div class="left-column">
         <div id="conjugation-help" class="page">
-          <h1>Conjugator</h1>
+          <div class="sxs">
+            <div><h2>Conjugator</h2></div>
+            <div><select name="language" id="languageSelect">
+                <option value="french" selected>French</option>
+                <option value="spanish">Spanish</option>
+                <option value="english">English</option>
+            </select></div>
+          </div>
           <div id="input-container">
-            <input type="text" id="message-input" placeholder="Type the french vocab word you want to conjugate...">
+            <input type="text" id="message-input" placeholder="Type the verb you want to conjugate..." style="height: 6vh;width: 25vw;resize: none;">
             <button onclick="sendMessage()" id="send-button">Send</button>
             <button onclick="clearChat()" id="clear-button">Clear Context</button>
           </div>
         </div>
+        <br><br>
         <div id="conjugation-practice" class="page">
-          <h1>Conjugation Practice</h1>
+          <h2>Conjugation Practice</h2>
           <div id="ai-response-container2"></div>
           <div id="input-container2">
-            <input type="text" id="message-input2" placeholder="Type about what you want to practice...">
+            <input type="text" id="message-input2" placeholder="Type about what you want to practice..." style="height: 6vh;width: 25vw;resize: none;">
             <button onclick="sendMessage2()" id="send-button2">Send</button>
             <button onclick="clearChat2()" id="clear-button2">Clear Context</button>
           </div>
