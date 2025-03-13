@@ -27,7 +27,7 @@ app.listen(port, () => {
     });
 
   // statically set model type for ollama responses
-  const model = 'llama3.2';
+  const model = 'gemma3:12b';
 
   // Setup OpenAI clients with API key
   const openaiT = new OpenAI({
@@ -57,7 +57,7 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "llama3.2-vision",
+        model = "gemma3:12b",
       } = req.body;
 
       if (!prompt) {
@@ -95,7 +95,7 @@ app.listen(port, () => {
       const {
         prompt = userPrompt,
         max_tokens = 8192,
-        model = "llama3.1",
+        model = "gemma3:12b",
       } = req.body;
 
       if (!prompt) {
@@ -176,7 +176,7 @@ app.listen(port, () => {
               ],
             },
           ],
-          model: "llama3.2-vision",
+          model: "gemma3:12b",
           stream: false,
           max_tokens: 8192,
           temperature: 0.2,
@@ -206,7 +206,7 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "llama3.2",
+        model = "gemma3:12b",
       } = req.body;
 
       // Validate the prompt
@@ -255,7 +255,7 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "llama3.2",
+        model = "gemma3:12b",
       } = req.body;
 
       // Validate the prompt
@@ -304,7 +304,7 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "llama3.2",
+        model = "gemma3:12b",
       } = req.body;
 
       // Validate the prompt
