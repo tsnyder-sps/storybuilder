@@ -1,111 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>FRQ grader</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World</title>
     <style>
-        button {background-color:#FF0000;border-radius:10%;color:white;font-family:'Times New Roman'}
-        input {background-color:#000000;border-radius:10%;color:white;font-family:'Times New Roman'}
-        textarea {background-color:#000000;color:white;font-family:'Times New Roman'}
-        label {background-color:#000000;color:white;font-family:'Times New Roman';font-size:1.3vw;}
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+        }
+        .ai-message {
+            background-color: #f5f5f5;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #message-input {
+            flex-grow: 1;
+            padding: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #2196f3;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
-        
-    <!-- enter question and scoring guidelines-->
-    <label id="questionLabel"
-    style="position:absolute;top:8vh;left:5vw;width:43vw;height:3vh;">
-    Enter the FRQ question here:</label>
-    <textarea id="questionInputArea"
-    style="resize:none;position:absolute;top:12vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <label id="guidelinesLabel"
-    style="position:absolute;top:35vh;left:5vw;width:43vw;height:3vh;">
-    Enter the FRQ scoring guideline here:</label>
-    <textarea id="guidelinesInputArea"
-    style="resize:none;position:absolute;top:39vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <label id="answerLabel"
-    style="position:absolute;top:62vh;left:5vw;width:43vw;height:3vh;">
-    Enter the student's answer here:</label>
-    <textarea id="answerInputArea"
-    style="position:absolute;top:66vh;left:5vw;width:43vw;height:20vh;">
-    </textarea>
-    <button id="uploadInput"
-    style="position:absolute;top:88vh;left:19vw;width:13vw;height:5vh;font-size:20px;">
-    Grade answer</button>
-
-    <!-- prompt interaction area-->
-    <label id="aiResponseLabel"
-    style="position:absolute;top:8vh;left:52vw;width:43vw;height:3vh;">
-    The AI will score the student and give feedback about their answer here:</label>
-    <textarea id="aiResponseAreaBackground" readonly 
-    style="color:black;position:absolute;top:12vh;left:52vw;width:43vw;height:74vh;resize:none;">
-    </textarea>
-    <div id="aiResponseArea"
-    style="overflow:auto;color:white;position:absolute;top:13vh;left:52.3vw;width:43vw;height:74vh;word-wrap:break-word;">
+    <h1>Hello World</h1>
+    <div id="chat-container"></div>
+    <div id="input-container">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button onclick="sendMessage()" id="send-button">Send</button>
+        <button onclick="clearChat()" id="clear-button">Clear Context</button>
     </div>
-    <!--scripts-->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script>
-        //startup
-        //startup defaults
-        document.getElementById("questionInputArea").value = "";
-        document.getElementById("guidelinesInputArea").value = "";
-        document.getElementById("answerInputArea").value = "";
-        document.getElementById("aiResponseArea").innerHTML = '';
-        //user selection vars
-        const aiResponseArea = document.getElementById("aiResponseArea");
-        ////////////////////////////////grade quiz
-        uploadInput.addEventListener('click', async (event) => {
-        event.preventDefault();
-        //grab user inputs
-        var questionInput = document.getElementById("questionInputArea").value;
-	    var guidelinesInput = document.getElementById("guidelinesInputArea").value;
-	    var answerInput = document.getElementById("answerInputArea").value;
-	    var fullPrompt = "Assume the role of a hardcore high school AP teacher. " 
-		+"Score students harshly, that is, if they do not fully satisfy a criteria in the scoring guidelines, do not give them the point. "
-		+"State the number of points that the student earned out of the total possible points in the problem. After this, do not restate the total number of possible points. "
-		+"Use HTML tags for formatting and not markdown."
-        +"Score the following student answer to an AP free response question using the provided scoring guidelines.\n"
-		+"Here is the free response question: " + questionInput + "\n"
-		+"Here is the student answer to that question: " + answerInput + "\n"
-		+"Here are the scoring guidelines for that question: " + guidelinesInput + "\n"
-		+"Return the score of the student and an explanation of why the student received that score.";
-
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        let conversationId = null;
         
-        try {
-            aiResponseArea.innerHTML = "Grading FRQ...";
-            const response = await fetch('http://localhost:3000/frq/grade', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: fullPrompt }),
-            });
-
-
-            if (!response.ok) {
-            throw new Error(`Server error: ${response.statusText}`);
+        // Load or create conversation ID to persist over page reloads
+        async function initializeConversation() {
+            conversationId = sessionStorage.getItem('conversationId');
+            if (!conversationId) {
+                conversationId = generateConversationId();
+                sessionStorage.setItem('conversationId', conversationId);
             }
-
-
-            const data = await response.json();  //receive ai response
-            const markdown = data.completion;
-            const html = marked.parse(markdown);  //format response
-            aiResponseArea.innerHTML = html;
-            console.log('Server responded', html)
-        } catch (error) {
-            console.error(error);
-            aiResponseArea.innerHTML = 'Error generating text.';
+            // Load existing messages
+            await loadConversation();
         }
 
+        function generateConversationId() {
+            return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
 
-        return false;
-        });
-        //////////////////////////////////end grade frq
+        async function loadConversation() {
+            try {
+                const response = await fetch(`/conversation/${conversationId}`);
+                const messages = await response.json();
+                chatContainer.innerHTML = ''; // Clear existing messages
+                messages.forEach(msg => {
+                    addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
+                });
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+            }
+        }
+
+        async function clearChat() {
+            try {
+                await fetch(`/conversation/${conversationId}`, {
+                    method: 'DELETE'
+                });
+                conversationId = generateConversationId();
+                sessionStorage.setItem('conversationId', conversationId);
+                chatContainer.innerHTML = '';
+            } catch (error) {
+                console.error('Error clearing chat:', error);
+            }
+        }
         
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
 
+            // Disable input and button while processing
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            try {
+                // Create a new message div for AI response with streaming cursor
+                const aiMessageDiv = document.createElement('div');
+                aiMessageDiv.className = 'message ai-message';
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                aiMessageDiv.appendChild(cursor);
+                chatContainer.appendChild(aiMessageDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Set up server sent event connection
+                const eventSource = new EventSource(
+                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
+                );
+                let fullResponse = '';
+
+                eventSource.onmessage = (event) => {
+                    if (event.data === '[DONE]') {
+                        eventSource.close();
+                        cursor.remove();
+                    } else {
+                        const chunk = event.data;
+                        fullResponse += chunk;
+                        aiMessageDiv.textContent = fullResponse;
+                        aiMessageDiv.appendChild(cursor);
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                    }
+                };
+
+                eventSource.onerror = (error) => {
+                    console.error('SSE Error:', error);
+                    eventSource.close();
+                    cursor.remove();
+                    if (!fullResponse) {
+                        aiMessageDiv.textContent = 'Sorry, there was an error processing your request.';
+                    }
+                };
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Sorry, there was an error processing your request.', 'ai');
+            }
+
+            // Re-enable input and button
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Allow sending message with Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Initialize conversation when page loads
+        initializeConversation();
     </script>
 </body>
-
 </html>

@@ -1,12 +1,10 @@
 {
-    "name": "narrative_generator",
+    "name": "hello-world",
     "version": "1.0.0",
     "type": "module",
     "main": "app.js",
     "dependencies": {
-        "express": "^4.21.2",
-        "marked": "^15.0.7",
-        "ollama": "^0.5.11",
-        "openai": "^4.85.1"
+      "express": "^4.21.2",
+      "openai": "^4.28.0"
     }
-}
+  }
