@@ -9,7 +9,7 @@ const itutilsButton = document.getElementById("itLearnMore");
 const authTestFunction = async () => {
   const prompt = "What is 1 + 1?";
   try {
-    const response = await fetch("http://localhost:3000/complete", {
+    const response = await fetch("/complete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

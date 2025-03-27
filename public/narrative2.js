@@ -65,7 +65,7 @@ quizGenerationButton.addEventListener("click", async (event) => {
 
   try {
     aiResponse.innerHTML = "Generating quiz...";
-    const response = await fetch("http://localhost:3000/narrative/quiz", {
+    const response = await fetch("/narrative/quiz", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -125,7 +125,7 @@ generateButton.addEventListener("click", async (event) => {
 
   try {
     aiResponse.innerHTML = "Generating narrative...";
-    const response = await fetch("http://localhost:3000/narrative/generate", {
+    const response = await fetch("/narrative/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

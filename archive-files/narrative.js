@@ -17,7 +17,7 @@ generateButton.addEventListener("click", async (e) => {
   try {
     aiResponse.textContent = "Generating story...";
     const response = await fetch(
-      "http://localhost:3000/narrative_old/generate",
+      "/narrative_old/generate",
       {
         method: "POST",
         headers: {

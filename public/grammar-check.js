@@ -25,7 +25,7 @@ studentInputUpload.addEventListener("click", async (event) => {
 
   try {
     aiResponseArea.innerHTML = "Analyzing writing...";
-    const response = await fetch("http://localhost:3000/writing/analzye", {
+    const response = await fetch("/writing/analzye", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

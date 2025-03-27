@@ -11,7 +11,7 @@ const generateButton = document.getElementById('generateButton');
        const fullPrompt = `Conjugate the following in the ${selectedTense} tense in Spanish: ${userPrompt}`;
        
        try {
-        const response = await fetch('http://localhost:3000/api/generate', {
+        const response = await fetch('/api/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

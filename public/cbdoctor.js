@@ -8,7 +8,7 @@ form.addEventListener('submit', async (e) => {
   try {
     aiResponse.textContent = "Analyzing images..."; 
 
-    const response = await fetch('http://localhost:3000/chromebook-doctor', {
+    const response = await fetch('/chromebook-doctor', {
       method: 'POST',
       body: formDataImage,
     });

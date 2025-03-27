@@ -35,7 +35,7 @@ sendButton.addEventListener('click', async (event) => {
     const fullPrompt = `Generate a full list of all the verb conjugations of the following ${currentLang} vocab word: ${vocab}. Do not give any additional context words, just give the conjugations of this word along with the associated pronouns.`;
     try {
         aiResponseContainer.textContent = "Generating conjugations...";
-        const response = await fetch('http://localhost:3000/verb/chat/stream', {
+        const response = await fetch('/verb/chat/stream', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ sendButton2.addEventListener('click', async (event) => {
     const fullPrompt2 = `${vocab2}`;
     try {
         aiResponseContainer2.textContent = "Generating conjugations...";
-        const response2 = await fetch('http://localhost:3000/verb/chat/stream', {
+        const response2 = await fetch('/verb/chat/stream', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
