@@ -162,7 +162,7 @@
         const vocab = messageInput.value;
 
         // Construct the prompt considering language selection and vocab words
-        const fullPrompt = `Write me a full list of all the verb conjugations of the following french vocab word: ${vocab}. Do not give any additional context words, just give the conjugations of this word along with the associated pronouns. There should be no english words in this response. DO NOT GIVE ANY ENGLISH WORDS HERE.`;
+        const fullPrompt = `Give me only the conjugations of the verb ${vocab} in the present tense, without any extra information or context.`;
         try {
             aiResponseContainer.textContent = "Generating conjugations...";
             const response = await fetch('http://localhost:8080/chat/stream', {
