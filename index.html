@@ -57,10 +57,17 @@
         var currentLang = document.getElementById("languageSelect").value;
         var userText = document.getElementById("studentInputArea").value;
 
+        var fullPrompt = userText;
+        /*
         var fullPrompt = "Assume the role of a high school " + currentLang + " teacher. Using only html tags, underline gramatical errors in the provided text. "
-		+"Make sure to underline errors of verb conjugation, verb tense, subject-verb agreement, and adjective agreement. "
-		+"After returning the underlined text, explain why each gramatical error was marked in english."
+        +"Do not correct errors unless you are absolutely certain that it is an error. "
+        +"This student is currently just learning " + currentLang + ", so only give feedback that is absolutely necessary for comprehension. "
+        +"Do not correct verb conjugations if the conjugation from the student and the corrected conjugation are the same. "
+        +"Correct verb conjugations where the subject and the conjugation differ in numeric agreement. "
+		+"Do not correct something on the grounds of it being of bad style. Do not use niche grammar rules or make up grammar rules. "
+        +"After returning the underlined text, explain why each gramatical error was marked in english."
 	    +"Here is the attached text: " + userText;
+        */
         
         try {
             aiResponseArea.innerHTML = "Analyzing writing...";

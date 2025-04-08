@@ -24,22 +24,38 @@ const openaiT = new OpenAI({
   }
 });
 
-//generates a quiz for the given narrative
+//sends the writing off for analysis
 app.post('/writing/analzye', async (req, res) => {
   const promptReq = req.body.prompt;
   try {
-    const { prompt = promptReq, max_tokens = 8192, model = "llama3.2" } = req.body;
+    const { prompt = promptReq, max_tokens = 8192, model = "gemma3:12b-it-q8_0" } = req.body;
 
     // Validate the prompt
     if (!prompt) {
       return res.status(400).json({ error: "Prompt is required." });
     };
 
+    const systemPrompt = "Assume the role of a high school foreign language teacher. "
+    +"Using only HTML tags, underline grammatical errors in the provided user text. "
+    +"Do not correct errors that you think are bad style. Do not correct errors that you think are unnatural. "
+    +"The user is learning a new language, so only correct errors that severely impede comprehension. "
+    +"If a word stays the same after a correction, omit the correction. "
+    +"Do not use niche grammar rules. Do not invent grammar rules. "
+    +"After returning the underlined text, explain why each error was underlined in English.";
+
     // // Call OpenAI API
     const completion = await openaiT.chat.completions.create({
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
       model: model,
+      temperature: 0,
+      min_p: 0.01,
+      repeat_penalty: 1.0,
+      top_k: 64,
+      top_p: 0.95,
       max_tokens: max_tokens,
-      messages: [{ role: "user", content: prompt }],
       stream: true,
     });
    
