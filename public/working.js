@@ -1,3 +1,6 @@
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
+
 const aiResponseContainer = document.getElementById("ai-response-container");
 const aiResponseContainer2 = document.getElementById("ai-response-container2");
 const messageInput = document.getElementById("message-input");
@@ -126,14 +129,23 @@ sendButton.addEventListener("click", async (event) => {
   event.preventDefault();
   const vocab = messageInput.value.trim();
   const currentLang = currentLangSelect.value;
-  // Construct the prompt considering language selection and vocab words
-  var userPrompt = `Generate a full list of all the verb conjugations of the following ${currentLang} vocab word: ${vocab}. Do not give any additional context words, just give the conjugations of this word along with the associated pronouns.`;
 
-  if (!vocab) return;
-  if (!currentLang) return;
+  // Construct the prompt
+  var userPrompt = `Generate a full conjugation table for all tenses (present, past, future, conditional, subjunctive) including indicative and imperative moods for the following ${currentLang} vocab word: ${vocab}.  Return the conjugations in a table format with pronouns and corresponding verb forms.  If no conjugations are found, return 'Conjugations not found for this word.'`;
+
+  if (!vocab) {
+    addMessage("Please enter a vocabulary word.", "ai");
+    return;
+  }
+  if (!currentLang) {
+    addMessage("Please select a language.", "ai");
+    return;
+  }
+
   // Disable input and button while processing
   messageInput.disabled = true;
   sendButton.disabled = true;
+  messageInput.focus(); // Keep focus on the input
 
   // Add user message to chat
   addMessage(`Vocab words: ${vocab}`, "user");
@@ -147,54 +159,61 @@ sendButton.addEventListener("click", async (event) => {
     cursor.className = "cursor";
     aiMessageDiv.appendChild(cursor);
     aiResponseContainer.appendChild(aiMessageDiv);
-    aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
 
     const eventSource = new EventSource(
       `/verb/chat/stream?message=${encodeURIComponent(
         userPrompt
       )}&converstionId=${conversationId}`
     );
+
     let fullResponse = "";
+    let scrollNeeded = false; // Flag to track if we need to scroll down
 
     eventSource.onmessage = (event) => {
       if (event.data === "[DONE]") {
         eventSource.close();
-        if (cursor) {
-          cursor.remove();
-        }
-        aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+        cursor.remove();
       } else {
-        const chunk = event.data;
-        fullResponse += chunk;
-
-        const html = marked.parse(fullResponse); // Convert Markdown to HTML
-        aiMessageDiv.innerHTML = html; // Set the HTML content
-
-        if (cursor) {
-          aiMessageDiv.appendChild(cursor);
-        }
-        aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+        // Sanitize the incoming chunk using DOMPurify
+        const sanitizedChunk = DOMPurify.sanitize(event.data);
+        fullResponse += marked.parse(sanitizedChunk);
+        aiMessageDiv.innerHTML = fullResponse;
+        aiMessageDiv.appendChild(cursor);
+        scrollNeeded = true; // Set the flag
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error("SSE Error:", error);
+      console.error("EventSource error:", error);
+      addMessage(
+        "An error occurred while communicating with the backend.",
+        "ai"
+      );
       eventSource.close();
       cursor.remove();
-      if (!fullResponse) {
-        aiMessageDiv.textContent =
-          "Sorry, there was an error processing your request.";
-      }
+      messageInput.disabled = false; // Re-enable input
+      sendButton.disabled = false;
     };
+
+    aiResponseContainer.addEventListener("scroll", () => {
+      scrollNeeded = false; // Reset the flag on scroll
+    });
   } catch (error) {
-    console.error("Error:", error);
-    addMessage("Sorry, there was an error processing your request.", "ai");
+    console.error("Error initiating EventSource:", error);
+    addMessage("Failed to connect to the backend.", "ai");
+  } finally {
+    // Ensure input is re-enabled
+    messageInput.disabled = false;
+    sendButton.disabled = false;
   }
 
-  //Re-enable input and button
-  messageInput.disabled = false;
-  sendButton.disabled = false;
-  messageInput.focus();
+  // Scroll to the bottom if needed
+  if (
+    scrollNeeded &&
+    aiResponseContainer.scrollHeight > aiResponseContainer.clientHeight
+  ) {
+    aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+  }
 });
 
 //Allow sending message with Enter key
