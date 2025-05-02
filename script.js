@@ -1,7 +1,18 @@
 import express from 'express';
 import OpenAI from 'openai';
-import path from 'path';
 import dotenv from 'dotenv';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import strip from 'strip-markdown';
+
+const processor = unified()
+  .use(remarkParse)
+  .use(strip);
+
+async function stripMarkdown(text) {
+  const file = await processor.process(text);
+  return String(file);
+}
 
 dotenv.config({
   path: "./.stuff.env"
@@ -21,7 +32,7 @@ const openai = new OpenAI({
 });
 
 // statically set model (this works for both tensorrt as well as ollama)
-const model = 'llama3.2-vision:latest'
+const model = 'gemma3:12b-it-q8_0';
 
 // Conversation/context storage
 const conversations = new Map();
@@ -69,7 +80,12 @@ app.get('/chat/stream', async (req, res) => {
       model: model,
       messages: conversation,
       max_tokens: 8192,
-      stream: true
+      stream: true,
+      temperature: 1.0,
+      min_p: 0.01,
+      repeat_penalty: 1.0,
+      top_k: 64,
+      top_p: 0.95,
     });
 
     let aiResponse = '';
@@ -77,10 +93,9 @@ app.get('/chat/stream', async (req, res) => {
     for await (const chunk of stream) {
       if (chunk.choices[0]?.delta?.content) {
         const content = chunk.choices[0].delta.content;
-        // store the AI response
-        aiResponse += content;
-        // Send each chunk to frontend
-        res.write(`data: ${content}\n\n`);
+        const cleanedContent = await stripMarkdown(content);
+        aiResponse += cleanedContent;
+        res.write(`data: ${cleanedContent}\n\n`);
       }
     }
 

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>replit</title>
     <link href="styles.css" rel="stylesheet" type="text/css" />
   </head>
@@ -12,10 +12,13 @@
       <div class="wrapper">
         <h2>What can we help you with today? </h2>
         <textarea id="userInput" type="text" placeholder="Ask us for help with homework..."></textarea>
-        <button id="submitter" onclick="sendMessage()" type="submit">Submit</button>
+        <div id="buttonHolder">
+            <button id="submitter" onclick="sendMessage()" type="submit">Submit</button>
+            <button id="clearButton" onclick="clearChat()">Clear Conversation</button>
+        </div>
       </div>
+      <p id="response"></p>
     </div>
-    <p id="response"></p>
     <script src="stylesHelper.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
@@ -86,7 +89,6 @@
                 aiMessageDiv.appendChild(cursor);
                 chatContainer.appendChild(aiMessageDiv);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
-
                 // Set up server sent event connection
                 const eventSource = new EventSource(
                     `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
@@ -144,5 +146,6 @@
         // Initialize conversation when page loads
         initializeConversation();
     </script>
-  </body>
+    
+    </body>
 </html>

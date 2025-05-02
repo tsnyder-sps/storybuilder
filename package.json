@@ -5,6 +5,10 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.21.2",
-    "openai": "^4.28.0"
+    "marked": "^15.0.7",
+    "openai": "^4.28.0",
+    "remark-parse": "^11.0.0",
+    "strip-markdown": "^6.0.0",
+    "unified": "^11.0.5"
   }
 }
