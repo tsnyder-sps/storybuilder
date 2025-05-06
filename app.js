@@ -1,6 +1,7 @@
 //needed for webserver component
 import express from 'express';
 //needed for interface to ollama host
+//import { openai } from 'openAi';
 import { Ollama } from 'ollama';
 //filesystem access to static frontend
 import path from 'path';

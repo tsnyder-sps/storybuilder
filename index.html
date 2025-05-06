@@ -119,7 +119,7 @@
         <h1>Conjugation Practice</h1>
         <div id="ai-response-container2"></div>
         <div id="input-container2">
-            <input type="text" id="message-input2" placeholder="Type the number of basic verb conjugation practice problems you want to do...">
+            <input type="text" id="message-input2" placeholder="example prompt: give me three basic french imparfait questions and grade my responses.">
             <button onclick="sendMessage2()" id="send-button2">Send</button>
             <button onclick="clearChat2()" id="clear-button2">Clear Context</button>
         </div>
@@ -157,74 +157,10 @@
    
         //start of new code
         sendButton.addEventListener('click', async (event) => {
-        console.log('Button clicked!');
-        event.preventDefault();
-        const vocab = messageInput.value;
-
-        // Construct the prompt considering language selection and vocab words
-        const fullPrompt = `Write me a full list of all the present indicative verb conjugations of the following french vocab word: ${vocab}. Do not give any additional information or context. words, just give the conjugations of this word along with the associated pronouns.`;
-        try {
-            aiResponseContainer.textContent = "Generating conjugations...";
-            const response = await fetch('http://localhost:8080/chat/stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: fullPrompt }),
-            });
-
-
-            if (!response.ok) {
-            throw new Error(`Server error: ${response.statusText}`);
-            }
-
-
-            const data = await response.json();
-            const markdown = data.completion;
-            const html = marked.parse(markdown);
-            aiResponseContainer.innerHTML = html;
-            console.log('Server responded', html)
-        } catch (error) {
-            console.error(error);
-            aiResponseContainer.innerHTML = 'Error generating text.';
-        }
-
-
-        return false;
+            sendMessage();
         });
         sendButton2.addEventListener('click', async (event) => {
-        console.log('Button clicked!');
-        event.preventDefault();
-        const vocab2 = messageInput2.value;
-        const fullPrompt2 = `Give me ${vocab2} basic french verb conjugation practice problems. After I respond with the answers to those questions, grade those answers.`;
-        try {
-            aiResponseContainer2.textContent = "Generating practice questions...";
-            const response2 = await fetch('http://localhost:8080/chat/stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: fullPrompt2 }),
-            });
-
-
-            if (!response2.ok) {
-            throw new Error(`Server error: ${response2.statusText}`);
-            }
-
-
-            const data2 = await response2.json();
-            const markdown2 = data2.completion;
-            const html2 = marked.parse(markdown2);
-            aiResponseContainer2.innerHTML = html2;
-            console.log('Server responded', html2)
-        } catch (error) {
-            console.error(error);
-            aiResponseContainer2.innerHTML = 'Error generating text.';
-        }
-
-
-        return false;
+            sendMessage2();
         });
 
         //end of new code
@@ -307,13 +243,12 @@
             }
         }
         
-        //Beginning of second code involving response
-
+        //Function involving the (verb conjugator) prompt and ai response
         async function sendMessage() {
             const message = messageInput.value.trim();
 
             //start of new code
-            const fullPrompt = `Write me a full list of all the present indicative verb conjugations of the following french vocab word: ${message}. Do not give any additional information or context. words, just give the conjugations of this word along with the associated pronouns.`;
+            const fullPrompt = `Write me a full list of all the present indicative, passe compose, imparfait, future simple, subjonctif, and conditional verb conjugations of the following french vocab word: ${message}. Do not give any additional information or context. Just give the conjugations of this word along with the associated pronouns.`;
             //end of new code
 
             if (!message) return;
@@ -380,7 +315,7 @@
             const message2 = messageInput2.value.trim();
 
             //start of new code
-            const fullPrompt2 = `Give me ${message2} basic french verb conjugation practice problems. After I respond with the answers to those questions, grade those answers.`;
+            const fullPrompt2 = '${message2}';
             //end of new code
 
             if (!message2) return;
