@@ -1,236 +1,120 @@
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import express from 'express';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+import { unified } from 'unified';
+import remarkParse from 'remark-parse';
+import strip from 'strip-markdown';
 
-const aiResponseContainer = document.getElementById("ai-response-container");
-const aiResponseContainer2 = document.getElementById("ai-response-container2");
-const messageInput = document.getElementById("message-input");
-const messageInput2 = document.getElementById("message-input2");
-const sendButton = document.getElementById("send-button");
-const sendButton2 = document.getElementById("send-button2");
-const currentLangSelect = document.getElementById("languageSelect");
-const currentLang = currentLangSelect.value;
+const processor = unified()
+  .use(remarkParse)
+  .use(strip);
 
-let conversationId = null;
-let conversationId2 = null;
+async function stripMarkdown(text) {
+  const file = await processor.process(text);
+  return String(file);
+}
 
-// Function to show a page based on the passed 'pageId' argument
-function showPage(pageId) {
-  // Get all pages
-  const pages = document.querySelectorAll(".page");
-  // Hide all pages
-  pages.forEach((page) => page.classList.remove("active"));
-  // Use if statements to check which page to display
-  if (pageId === "conjugation-help") {
-    document.getElementById("conjugation-help").classList.add("active");
-  } else if (pageId === "conjugation-practice") {
-    document.getElementById("conjugation-practice").classList.add("active");
+dotenv.config({
+  path: "./.stuff.env"
+});
+
+const app = express();
+const port = 8080;
+
+// Initialize OpenAI client with API key
+const openai = new OpenAI({
+  apiKey: 'unused',
+  baseURL: process.env.OPENAI_API_BASE,
+  defaultHeaders: {
+    'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+    'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
   }
-}
+});
 
-// Load or create conversation ID to persist over page reloads
-async function initializeConversation() {
-  conversationId = sessionStorage.getItem("conversationId");
-  if (!conversationId) {
-    conversationId = generateConversationId();
-    sessionStorage.setItem("conversationId", conversationId);
-  }
-  // Load existing messages
-  await loadConversation();
-}
+// statically set model (this works for both tensorrt as well as ollama)
+const model = 'gemma3:12b-it-q8_0';
 
-async function initializeConversation2() {
-  conversationId2 = sessionStorage.getItem("conversationId2");
-  if (!conversationId2) {
-    conversationId2 = generateConversationId2();
-    sessionStorage.setItem("conversationId2", conversationId2);
-  }
-  // Load existing messages
-  await loadConversation2();
-}
+// Conversation/context storage
+const conversations = new Map();
 
-function generateConversationId() {
-  return "conv_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-}
+app.use(express.json());
 
-function generateConversationId2() {
-  return "conv_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-}
+// serve static html frontend index.html
+app.use(express.static("public"));
 
-async function loadConversation() {
+// Get conversation history
+app.get('/conversation/:conversationId', (req, res) => {
+  const { conversationId } = req.params;
+  const conversation = conversations.get(conversationId) || [];
+  res.json(conversation);
+});
+
+// Clear conversation
+app.delete('/conversation/:conversationId', (req, res) => {
+  const { conversationId } = req.params;
+  conversations.delete(conversationId);
+  res.sendStatus(200);
+});
+
+// Streaming chat endpoint using server sent events
+app.get('/chat/stream', async (req, res) => {
   try {
-    const response = await fetch(`/conversation/${conversationId}`);
-    const messages = await response.json();
-    aiResponseContainer.innerHTML = ""; // Clear existing messages
-    messages.forEach((msg) => {
-      addMessage(msg.content, msg.role === "user" ? "user" : "ai");
+    const message = req.query.message;
+    const conversationId = req.query.conversationId;
+
+    // Get or create conversation history
+    let conversation = conversations.get(conversationId) || [];
+
+    // Add user message to history
+    conversation.push({ role: 'user', content: message });
+
+    // Set headers for streamed messages to web browser
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
     });
-  } catch (error) {
-    console.error("Error loading conversation: ", error);
-  }
-}
 
-async function loadConversation2() {
-  try {
-    const response2 = await fetch(`/conversation/${conversationId2}`);
-    const messages2 = await response2.json();
-    aiResponseContainer2.innerHTML = ""; // Clear existing messages
-    messages2.forEach((msg) => {
-      addMessage2(msg.content, msg.role === "user" ? "user" : "ai");
+    // Stream the response from the api
+    const stream = await openai.chat.completions.create({
+      model: model,
+      messages: conversation,
+      max_tokens: 8192,
+      stream: true,
+      temperature: 1.0,
+      min_p: 0.01,
+      repeat_penalty: 1.0,
+      top_k: 64,
+      top_p: 0.95,
     });
-  } catch (error) {
-    console.error("Error loading conversation: ", error);
-  }
-}
 
-async function clearChat() {
-  try {
-    await fetch(`/conversation/${conversationId}`, {
-      method: "DELETE",
-    });
-    conversationId = generateConversationId();
-    sessionStorage.setItem("conversationId", conversationId);
-    aiResponseContainer.innerHTML = "";
-  } catch (error) {
-    console.error("Error clearing chat: ", error);
-  }
-}
+    let aiResponse = '';
 
-async function clearChat2() {
-  try {
-    await fetch(`/conversation/${conversationId2}`, {
-      method: "DELETE",
-    });
-    conversationId2 = generateConversationId();
-    sessionStorage.setItem("conversationId2", conversationId2);
-    aiResponseContainer2.innerHTML = "";
-  } catch (error) {
-    console.error("Error clearing chat: ", error);
-  }
-}
-
-function addMessage(text, sender) {
-  const messageDiv = document.createElement("div");
-  messageDiv.className = `message ${sender}-message`;
-  messageDiv.textContent = text;
-  aiResponseContainer.appendChild(messageDiv);
-  aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
-}
-
-function addMessage2(text, sender) {
-  const messageDiv2 = document.createElement("div");
-  messageDiv2.className = `message ${sender}-message`;
-  messageDiv2.textContent = text;
-  aiResponseContainer2.appendChild(messageDiv2);
-  aiResponseContainer2.scrollTop = aiResponseContainer2.scrollHeight;
-}
-
-sendButton.addEventListener("click", async (event) => {
-  console.log("Button clicked!");
-  event.preventDefault();
-  const vocab = messageInput.value.trim();
-  const currentLang = currentLangSelect.value;
-
-  // Construct the prompt
-  var userPrompt = `Generate a full conjugation table for all tenses (present, past, future, conditional, subjunctive) including indicative and imperative moods for the following ${currentLang} vocab word: ${vocab}.  Return the conjugations in a table format with pronouns and corresponding verb forms.  If no conjugations are found, return 'Conjugations not found for this word.'`;
-
-  if (!vocab) {
-    addMessage("Please enter a vocabulary word.", "ai");
-    return;
-  }
-  if (!currentLang) {
-    addMessage("Please select a language.", "ai");
-    return;
-  }
-
-  // Disable input and button while processing
-  messageInput.disabled = true;
-  sendButton.disabled = true;
-  messageInput.focus(); // Keep focus on the input
-
-  // Add user message to chat
-  addMessage(`Vocab words: ${vocab}`, "user");
-  messageInput.value = "";
-
-  try {
-    // Create a new message div for AI response with a streaming cursor
-    aiMessageDiv = document.createElement("div");
-    aiMessageDiv.className = "message ai-message";
-    cursor = document.createElement("span");
-    cursor.className = "cursor";
-    aiMessageDiv.appendChild(cursor);
-    aiResponseContainer.appendChild(aiMessageDiv);
-
-    const eventSource = new EventSource(
-      `/verb/chat/stream?message=${encodeURIComponent(
-        userPrompt
-      )}&converstionId=${conversationId}`
-    );
-
-    let fullResponse = "";
-    let scrollNeeded = false; // Flag to track if we need to scroll down
-
-    eventSource.onmessage = (event) => {
-      if (event.data === "[DONE]") {
-        eventSource.close();
-        cursor.remove();
-      } else {
-        // Sanitize the incoming chunk using DOMPurify
-        const sanitizedChunk = DOMPurify.sanitize(event.data);
-        fullResponse += marked.parse(sanitizedChunk);
-        aiMessageDiv.innerHTML = fullResponse;
-        aiMessageDiv.appendChild(cursor);
-        scrollNeeded = true; // Set the flag
+    for await (const chunk of stream) {
+      if (chunk.choices[0]?.delta?.content) {
+        const content = chunk.choices[0].delta.content;
+        const cleanedContent = await stripMarkdown(content);
+        aiResponse += cleanedContent;
+        res.write(`data: ${cleanedContent}\n\n`);
       }
-    };
+    }
 
-    eventSource.onerror = (error) => {
-      console.error("EventSource error:", error);
-      addMessage(
-        "An error occurred while communicating with the backend.",
-        "ai"
-      );
-      eventSource.close();
-      cursor.remove();
-      messageInput.disabled = false; // Re-enable input
-      sendButton.disabled = false;
-    };
+    // Add complete AI response to conversation context
+    conversation.push({ role: 'assistant', content: aiResponse });
+    conversations.set(conversationId, conversation);
 
-    aiResponseContainer.addEventListener("scroll", () => {
-      scrollNeeded = false; // Reset the flag on scroll
-    });
+    // mark end of streaming response
+    res.write('data: [DONE]\n\n');
   } catch (error) {
-    console.error("Error initiating EventSource:", error);
-    addMessage("Failed to connect to the backend.", "ai");
+    console.error('Streaming Error:', error);
+    res.write('data: Error processing request\n\n');
   } finally {
-    // Ensure input is re-enabled
-    messageInput.disabled = false;
-    sendButton.disabled = false;
-  }
-
-  // Scroll to the bottom if needed
-  if (
-    scrollNeeded &&
-    aiResponseContainer.scrollHeight > aiResponseContainer.clientHeight
-  ) {
-    aiResponseContainer.scrollTop = aiResponseContainer.scrollHeight;
+    res.end();
   }
 });
 
-//Allow sending message with Enter key
-messageInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
 
-messageInput2.addEventListener("keypress", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage2();
-  }
+// run application
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
 });
-
-// Initialize conversdation when page loads
-initializeConversation();
-initializeConversation2();

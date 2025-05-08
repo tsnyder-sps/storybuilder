@@ -1,5 +1,5 @@
 // Get all buttons
-const aiChatButton = document.getElementById("aiChatOpen");
+const aiChatButton = document.getElementById("aiChatExplore");
 const authTestButton = document.getElementById("authtest");
 const languageButton = document.getElementById("worldLanguageExplore");
 const scienceButton = document.getElementById("scienceExplore");
@@ -35,9 +35,8 @@ authTestFunction();
 // Add event listeners to buttons
 
 // Open AI Chat window
-aiChatButton.addEventListener("click", () => {
-  const url = "https://chat.scarboroughschools.org/";
-  window.open(url, "new_window");
+aiChatButton.addEventListener("click", function () {
+  window.location.href = "/chatbots.html";
   console.log("Button clicked!");
 });
 

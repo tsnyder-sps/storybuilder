@@ -4,13 +4,15 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const OpenAI = require("openai");
 const {
   ProjectExtendedResponseModelTargetAudience,
 } = require("elevenlabs/api");
 require("dotenv").config({ path: "./.cf_access.env" });
-const Ollama = require("ollama").Ollama;
+
+// Model configuration
+const model = process.env.OPENAI_MODEL || 'gemma3:12b-it-q8_0';
 
 // Setup express
 app.use(cors());
@@ -23,14 +25,6 @@ const upload = multer({ storage: multer.memoryStorage() });
 // Start the server
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
-
-  // ollama server connection with nodejs library
-  const ollama = new Ollama({
-    host: "http://localhost:11434",
-  });
-
-  // statically set model type for ollama responses
-  const model = "gemma3:12b-it-q8_0";
 
   // Setup OpenAI clients with API key
   const openaiT = new OpenAI({
@@ -60,7 +54,6 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "gemma3:12b",
       } = req.body;
 
       if (!prompt) {
@@ -76,47 +69,6 @@ app.listen(port, () => {
 
       res.json({
         completion: completion.choices[0].message.content, // Direct access to content
-      });
-    } catch (error) {
-      console.error("Error calling OpenAI API:", error);
-      if (error.response) {
-        res.status(error.response.status).json(error.response.data);
-      } else {
-        res.status(500).json({ error: "Internal server error" });
-      }
-    }
-  });
-
-  // Old Narrative generation endpoints
-  app.post("/narrative_old/generate", async (req, res) => {
-    const systemPrompt =
-      "You are a highschool language teacher, and you want your students to read an interesting story to help learn the language. You want the stories to contain vocabulary words and verb tenses that match their high school expirience level";
-    const userPrompt = req.body.prompt;
-    console.log("User prompt:", userPrompt);
-    try {
-      console.log("Sending request using local openAI API...");
-      const {
-        prompt = userPrompt,
-        max_tokens = 8192,
-        model = "gemma3:12b",
-      } = req.body;
-
-      if (!prompt) {
-        return res.status(400).json({ error: "Prompt is required." });
-      }
-
-      const completion = await openaiT.chat.completions.create({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
-        ],
-        model: model,
-        stream: false,
-        max_tokens: max_tokens,
-      });
-
-      res.json({
-        completion: completion.choices[0].message.content,
       });
     } catch (error) {
       console.error("Error calling OpenAI API:", error);
@@ -179,7 +131,7 @@ app.listen(port, () => {
               ],
             },
           ],
-          model: "gemma3:12b",
+          model: model,
           stream: false,
           max_tokens: 8192,
           temperature: 0.2,
@@ -209,7 +161,6 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "gemma3:12b",
       } = req.body;
 
       // Validate the prompt
@@ -223,6 +174,10 @@ app.listen(port, () => {
         max_tokens: max_tokens,
         messages: [{ role: "user", content: prompt }],
         stream: true,
+        temperature: 1.0,
+        min_p: 0.01,
+        top_k: 64,
+        top_p: 0.95,
       });
 
       let aiResponse = "";
@@ -258,7 +213,6 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "gemma3:12b",
       } = req.body;
 
       // Validate the prompt
@@ -272,6 +226,11 @@ app.listen(port, () => {
         max_tokens: max_tokens,
         messages: [{ role: "user", content: prompt }],
         stream: true,
+        temperature: 2.0,
+        min_p: 0.01,
+        repeat_penalty: 1.0,
+        top_k: 64,
+        top_p: 0.95,
       });
 
       let aiResponse = "";
@@ -307,7 +266,7 @@ app.listen(port, () => {
       const {
         prompt = promptReq,
         max_tokens = 8192,
-        model = "gemma3:12b",
+        model = model,
       } = req.body;
 
       // Validate the prompt
@@ -351,19 +310,19 @@ app.listen(port, () => {
 
   ////////////////////////////////////// Begin Aditya's Verb conjugation endpoint (Rmarshall lifted to openAPI)
   // Conversation/context storage
-  const conversations = new Map();
+  const Aconversations = new Map();
 
   // Get conversation history
-  app.get("/conversation/:conversationId", (req, res) => {
+  app.get("/Aconversation/:conversationId", (req, res) => {
     const { conversationId } = req.params;
-    const conversation = conversations.get(conversationId) || [];
+    const conversation = Aconversations.get(conversationId) || [];
     res.json(conversation);
   });
 
   // Clear conversation
-  app.delete("/conversation/:conversationId", (req, res) => {
+  app.delete("/Aconversation/:conversationId", (req, res) => {
     const { conversationId } = req.params;
-    conversations.delete(conversationId);
+    Aconversations.delete(conversationId);
     res.sendStatus(200);
   });
 
@@ -379,7 +338,7 @@ app.listen(port, () => {
       }
 
       // Get or create conversation history
-      let conversation = conversations.get(conversationId) || [];
+      let conversation = Aconversations.get(conversationId) || [];
 
       // Add user message to history
       conversation.push({ role: "user", content: userMessage });
@@ -413,7 +372,7 @@ app.listen(port, () => {
 
       // Add complete AI response to conversation context
       conversation.push({ role: "assistant", content: aiResponse });
-      conversations.set(conversationId, conversation);
+      Aconversations.set(conversationId, conversation);
 
       // mark end of streaming response
       res.write("data: [DONE]\n\n");
@@ -425,4 +384,78 @@ app.listen(port, () => {
     }
   });
   ////////////////////////////////////// End Aditya's Verb conjugation endpoint
-});
+
+  ////////////////////////////////////// Begin Ryan's chatbot endpoint
+  // Conversation/context storage
+  const conversations = new Map();
+
+  // Get conversation history
+  app.get('/conversation/:conversationId', (req, res) => {
+    const { conversationId } = req.params;
+    const conversation = conversations.get(conversationId) || [];
+    res.json(conversation);
+  });
+
+  // Clear conversation
+  app.delete('/conversation/:conversationId', (req, res) => {
+    const { conversationId } = req.params;
+    conversations.delete(conversationId);
+    res.sendStatus(200);
+  });
+
+  // Streaming chat endpoint using server sent events
+  app.get('/chat/stream', async (req, res) => {
+    try {
+      const message = req.query.message;
+      const conversationId = req.query.conversationId;
+
+      // Get or create conversation history
+      let conversation = conversations.get(conversationId) || [];
+
+      // Add user message to history
+      conversation.push({ role: 'user', content: message });
+
+      // Set headers for streamed messages to web browser
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+      });
+
+      // Stream the response from the api
+      const stream = await openaiT.chat.completions.create({
+        model: model,
+        messages: conversation,
+        max_tokens: 8192,
+        stream: true,
+        temperature: 1.0,
+        min_p: 0.01,
+        repeat_penalty: 1.0,
+        top_k: 64,
+        top_p: 0.95,
+      });
+
+      let aiResponse = '';
+
+      for await (const chunk of stream) {
+        if (chunk.choices[0]?.delta?.content) {
+          const content = chunk.choices[0].delta.content;
+          aiResponse += content;
+          res.write(`data: ${content}\n\n`);
+        }
+      }
+
+      // Add complete AI response to conversation context
+      conversation.push({ role: 'assistant', content: aiResponse });
+      conversations.set(conversationId, conversation);
+
+      // mark end of streaming response
+      res.write('data: [DONE]\n\n');
+    } catch (error) {
+      console.error('Streaming Error:', error);
+      res.write('data: Error processing request\n\n');
+    } finally {
+      res.end();
+    }
+  });
+  })

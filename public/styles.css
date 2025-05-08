@@ -208,6 +208,14 @@ main[role="main"] {
   max-width: 350px;
 }
 
+.maxcard {
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .icon {
   font-size: 48px;
   color: #2e4053;
@@ -216,7 +224,8 @@ main[role="main"] {
 
 button {
   background-color: #ffcc00;
-  color: #fff;
+  color: #2e4053;
+  font-weight: bold;
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
