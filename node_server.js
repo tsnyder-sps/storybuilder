@@ -9,6 +9,7 @@ const OpenAI = require("openai");
 const {
   ProjectExtendedResponseModelTargetAudience,
 } = require("elevenlabs/api");
+const { kMaxLength } = require("buffer");
 require("dotenv").config({ path: "./.cf_access.env" });
 
 // Model configuration
