@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 import path from 'path';
 
 const app = express();
-const port = 8080;
+const port = 8081;
 
 // Initialize OpenAI client with API key
 const openai = new OpenAI({
