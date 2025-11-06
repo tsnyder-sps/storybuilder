@@ -13,7 +13,7 @@ const { kMaxLength } = require("buffer");
 require("dotenv").config({ path: "./.cf_access.env" });
 
 // Model configuration
-const model = process.env.OPENAI_MODEL || 'gemma3:12b-it-q8_0';
+const model = process.env.OPENAI_MODEL || "gemma3:12b-it-q8_0";
 
 // Setup express
 app.use(cors());
@@ -52,10 +52,7 @@ app.listen(port, () => {
   app.post("/complete", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
-      const {
-        prompt = promptReq,
-        max_tokens = 8192,
-      } = req.body;
+      const { prompt = promptReq, max_tokens = 8192 } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required." });
@@ -159,10 +156,7 @@ app.listen(port, () => {
   app.post("/narrative/quiz", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
-      const {
-        prompt = promptReq,
-        max_tokens = 8192,
-      } = req.body;
+      const { prompt = promptReq, max_tokens = 8192 } = req.body;
 
       // Validate the prompt
       if (!prompt) {
@@ -211,10 +205,7 @@ app.listen(port, () => {
   app.post("/narrative/generate", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
-      const {
-        prompt = promptReq,
-        max_tokens = 8192,
-      } = req.body;
+      const { prompt = promptReq, max_tokens = 8192 } = req.body;
 
       // Validate the prompt
       if (!prompt) {
@@ -264,11 +255,7 @@ app.listen(port, () => {
   app.post("/writing/analzye", async (req, res) => {
     const promptReq = req.body.prompt;
     try {
-      const {
-        prompt = promptReq,
-        max_tokens = 8192,
-        model = model,
-      } = req.body;
+      const { prompt = promptReq, max_tokens = 8192, model = model } = req.body;
 
       // Validate the prompt
       if (!prompt) {
@@ -391,21 +378,21 @@ app.listen(port, () => {
   const conversations = new Map();
 
   // Get conversation history
-  app.get('/conversation/:conversationId', (req, res) => {
+  app.get("/conversation/:conversationId", (req, res) => {
     const { conversationId } = req.params;
     const conversation = conversations.get(conversationId) || [];
     res.json(conversation);
   });
 
   // Clear conversation
-  app.delete('/conversation/:conversationId', (req, res) => {
+  app.delete("/conversation/:conversationId", (req, res) => {
     const { conversationId } = req.params;
     conversations.delete(conversationId);
     res.sendStatus(200);
   });
 
   // Streaming chat endpoint using server sent events
-  app.get('/chat/stream', async (req, res) => {
+  app.get("/chat/stream", async (req, res) => {
     try {
       const message = req.query.message;
       const conversationId = req.query.conversationId;
@@ -414,13 +401,13 @@ app.listen(port, () => {
       let conversation = conversations.get(conversationId) || [];
 
       // Add user message to history
-      conversation.push({ role: 'user', content: message });
+      conversation.push({ role: "user", content: message });
 
       // Set headers for streamed messages to web browser
       res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       });
 
       // Stream the response from the api
@@ -436,7 +423,7 @@ app.listen(port, () => {
         top_p: 0.95,
       });
 
-      let aiResponse = '';
+      let aiResponse = "";
 
       for await (const chunk of stream) {
         if (chunk.choices[0]?.delta?.content) {
@@ -447,16 +434,18 @@ app.listen(port, () => {
       }
 
       // Add complete AI response to conversation context
-      conversation.push({ role: 'assistant', content: aiResponse });
+      conversation.push({ role: "assistant", content: aiResponse });
       conversations.set(conversationId, conversation);
 
       // mark end of streaming response
-      res.write('data: [DONE]\n\n');
+      res.write("data: [DONE]\n\n");
     } catch (error) {
-      console.error('Streaming Error:', error);
-      res.write('data: Error processing request\n\n');
+      console.error("Streaming Error:", error);
+      res.write("data: Error processing request\n\n");
     } finally {
       res.end();
     }
   });
-  })
+});
+
+// test comment for git example
