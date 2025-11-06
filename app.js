@@ -1,6 +1,10 @@
 import express from 'express';
 import OpenAI from 'openai';
 import path from 'path';
+import dotenv from 'dotenv';
+const result = dotenv.config();
+
+console.log(result);
 
 const app = express();
 const port = 8081;
@@ -14,9 +18,11 @@ const openai = new OpenAI({
     'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
   }
 });
+console.log(process.env.CF_ACCESS_CLIENT_ID);
+console.log(process.env.CF_ACCESS_CLIENT_SECRET);
 
 // statically set model (this works for both tensorrt as well as ollama)
-const model = 'llama3.2-vision:latest'
+const model = 'gemma3:12b-it-q8_0'
 
 // Conversation/context storage
 const conversations = new Map();

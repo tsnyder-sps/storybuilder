@@ -4,6 +4,7 @@
   "type": "module",
   "main": "app.js",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "openai": "^4.28.0"
   }
