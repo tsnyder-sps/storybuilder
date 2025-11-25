@@ -73,19 +73,24 @@
     </div>
 
     <script>
+        // Can also type the script file on the tag. File is on the server.
         const chatContainer = document.getElementById('chat-container');
         const messageInput = document.getElementById('message-input');
+        // Where the user puts in the message.
         const sendButton = document.getElementById('send-button');
         let conversationId = null;
         
         // Load or create conversation ID to persist over page reloads
+        // Async: This can run while other functions are running.
         async function initializeConversation() {
             conversationId = sessionStorage.getItem('conversationId');
-            if (!conversationId) {
-                conversationId = generateConversationId();
-                sessionStorage.setItem('conversationId', conversationId);
+            // Session storage. Looks in RAM to see if there is already a conversation ID.
+            if (!conversationId) { // If conversation ID doesn´t exist...
+                conversationId = generateConversationId(); //..generate it...
+                sessionStorage.setItem('conversationId', conversationId); //...then store it on the cache,
             }
             // Load existing messages
+            // Once loadConversation is done this will run.
             await loadConversation();
         }
 
@@ -95,12 +100,12 @@
 
         async function loadConversation() {
             try {
-                const response = await fetch(`/conversation/${conversationId}`);
-                const messages = await response.json();
+                const response = await fetch(`/conversation/${conversationId}`); //conversationId is a parameter of the request.
+                const messages = await response.json(); // waiting response from app.js here.
                 chatContainer.innerHTML = ''; // Clear existing messages
                 messages.forEach(msg => {
                     addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai');
-                });
+                }); // Only makes the other functions run if it is successful.
             } catch (error) {
                 console.error('Error loading conversation:', error);
             }
@@ -109,7 +114,7 @@
         async function clearChat() {
             try {
                 await fetch(`/conversation/${conversationId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE' //app.delete in js file.
                 });
                 conversationId = generateConversationId();
                 sessionStorage.setItem('conversationId', conversationId);
@@ -121,7 +126,7 @@
         
         async function sendMessage() {
             const message = messageInput.value.trim();
-            if (!message) return;
+            if (!message) return; // If there's no message, stop.
 
             // Disable input and button while processing
             messageInput.disabled = true;
@@ -131,13 +136,13 @@
             addMessage(message, 'user');
             messageInput.value = '';
 
-            try {
+            try { // waiting for this to run correctly.
                 // Create a new message div for AI response with streaming cursor
                 const aiMessageDiv = document.createElement('div');
-                aiMessageDiv.className = 'message ai-message';
-                const cursor = document.createElement('span');
+                aiMessageDiv.className = 'message ai-message'; // Creates new class containing the new message.
+                const cursor = document.createElement('span'); // Creating line of text.
                 cursor.className = 'cursor';
-                aiMessageDiv.appendChild(cursor);
+                aiMessageDiv.appendChild(cursor); //...then putting it into the div.
                 chatContainer.appendChild(aiMessageDiv);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -147,16 +152,16 @@
                 );
                 let fullResponse = '';
 
-                eventSource.onmessage = (event) => {
-                    if (event.data === '[DONE]') {
-                        eventSource.close();
-                        cursor.remove();
+                eventSource.onmessage = (event) => { // Events, how servers and clients communicate without changing interface.
+                    if (event.data === '[DONE]') { // Waiting for DONE event, indicating AI message is done.
+                        eventSource.close(); // Close connection.
+                        cursor.remove(); // Get rid of cursor.
                     } else {
-                        const chunk = event.data;
-                        fullResponse += chunk;
+                        const chunk = event.data; //Reading chunk of the AI message.
+                        fullResponse += chunk; //Add it to what it's already shown on the page.
                         aiMessageDiv.textContent = fullResponse;
-                        aiMessageDiv.appendChild(cursor);
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        aiMessageDiv.appendChild(cursor); // Cursor moves to the end of the most recent word.
+                        chatContainer.scrollTop = chatContainer.scrollHeight; // Tells window to scroll alongside the response.
                     }
                 };
 
@@ -174,9 +179,10 @@
             }
 
             // Re-enable input and button
-            messageInput.disabled = false;
-            sendButton.disabled = false;
-            messageInput.focus();
+            // TODO: fix these lines.
+            messageInput.disabled = false; // User can send message again.
+            sendButton.disabled = false; // Turn send button back on for the next message.
+            messageInput.focus(); // Put cursor back into input message field.
         }
 
         function addMessage(text, sender) {

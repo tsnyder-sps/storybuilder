@@ -1,13 +1,13 @@
 import express from 'express';
 import OpenAI from 'openai';
 import path from 'path';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'; // Comment to explain this later
 const result = dotenv.config();
 
 console.log(result);
 
 const app = express();
-const port = 8081;
+const port = 8081; // which door for the application?
 
 // Initialize OpenAI client with API key
 const openai = new OpenAI({
@@ -26,15 +26,21 @@ const model = 'gemma3:12b-it-q8_0'
 
 // Conversation/context storage
 const conversations = new Map();
+// Map is an array with an ID instead of index numbers.
 
 app.use(express.json());
 
 // serve static html frontend index.html
+// get is method, app initializes express.
+// ´/'is where the url for the client will go.
 app.get('/', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
 // Get conversation history
+// : means expecting input. conversationId is a query, AKA a value passed after question mark in url.
+// req is what is being sent in. res is the response sent to the html file.
+// no return because this function will keep running even when conversation id changes.
 app.get('/conversation/:conversationId', (req, res) => {
   const { conversationId } = req.params;
   const conversation = conversations.get(conversationId) || [];
