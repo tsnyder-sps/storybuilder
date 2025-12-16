@@ -1,0 +1,32 @@
+<html>
+    <head>
+        <style>
+            #big_square {
+                border: 2px solid black;
+                margin: 20px;
+                padding: 20px;
+                background-color: rgba(75,131,141,.74);
+                text-align: center;
+            }
+        </style>
+    </head>
+
+    <body>
+        <h1>Here's a surprise...</h1>
+        <div id="big_square">
+            <h1 id="output_title">What will I say?</h1>
+            <t id="output">Press the button to find out!</t>
+        </div>
+        <button id="btn">Press me!</button>
+        <script>
+            document.getElementById("btn").addEventListener("click", () => {
+                fetch("frontend") // Calls the route.
+                    .then(res => res.json()) // Converts the response to JSON.
+                    .then(data => { // Sets the output text to the response data.
+                        document.getElementById("output").textContent = data.text;
+                    });
+            });
+        </script>
+            
+    </body>
+</html>
