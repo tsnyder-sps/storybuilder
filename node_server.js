@@ -1,14 +1,16 @@
 // Import libraries and define variables
 const express = require("express");
 const cors = require("cors");
+const { config } = require("dotenv");
 const multer = require("multer");
-const path = require("path");
+// const path = require("path");
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3005;
 const OpenAI = require("openai");
 // const { ProjectExtendedResponseModelTargetAudience } = require("elevenlabs/api");
-const { kMaxLength } = require("buffer");
-require("dotenv").config({ path: "./.cf_access.env" });
+// const { kMaxLength } = require("buffer");
+
+config();
 
 // Model configuration
 const model = process.env.OPENAI_MODEL || "gemma3:12b-it-q8_0";
@@ -28,21 +30,21 @@ app.listen(port, () => {
   // Setup OpenAI clients with API key
   const openaiT = new OpenAI({
     apiKey: "unused",
-    baseURL: "https://api-tensor.scarboroughschools.org/v1",
+    baseURL: process.env.OPENAI_API_BASE,
     defaultHeaders: {
       "CF-Access-Client-Id": process.env.CF_ACCESS_CLIENT_ID,
       "CF-Access-Client-Secret": process.env.CF_ACCESS_CLIENT_SECRET,
     },
   });
 
-  const openaiV = new OpenAI({
+  /*   const openaiV = new OpenAI({
     apiKey: "unused",
     baseURL: "https://api-vlm.scarboroughschools.org/v1",
     defaultHeaders: {
       "CF-Access-Client-Id": process.env.CF_ACCESS_CLIENT_ID,
       "CF-Access-Client-Secret": process.env.CF_ACCESS_CLIENT_SECRET,
     },
-  });
+  }); */
 
   // Express endpoints
 
@@ -56,7 +58,7 @@ app.listen(port, () => {
         return res.status(400).json({ error: "Prompt is required." });
       }
 
-      const completion = await openaiV.chat.completions.create({
+      const completion = await openaiT.chat.completions.create({
         model: model,
         max_tokens: max_tokens,
         messages: [{ role: "user", content: prompt }],
@@ -88,7 +90,7 @@ app.listen(port, () => {
         return res.status(400).json({ error: "Missing asset_tag property" });
       }
 
-      const assetTag = req.body.asset_tag;
+      // const assetTag = req.body.asset_tag;
       const systemPrompt =
         "You are an IT field technician, and you maintain a fleet of laptop devices for students in a high school. \
       You can identify damage to a device by looking at an images. Students are sending you 2 images, one of the front of the laptop \
@@ -115,7 +117,7 @@ app.listen(port, () => {
           backImage.mimetype
         };base64,${backImage.buffer.toString("base64")}`;
 
-        const completion = await openaiV.chat.completions.create({
+        const completion = await openaiT.chat.completions.create({
           messages: [
             { role: "system", content: systemPrompt },
             {
