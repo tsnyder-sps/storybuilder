@@ -6,9 +6,7 @@ const path = require("path");
 const app = express();
 const port = process.env.PORT || 3000;
 const OpenAI = require("openai");
-const {
-  ProjectExtendedResponseModelTargetAudience,
-} = require("elevenlabs/api");
+// const { ProjectExtendedResponseModelTargetAudience } = require("elevenlabs/api");
 const { kMaxLength } = require("buffer");
 require("dotenv").config({ path: "./.cf_access.env" });
 
