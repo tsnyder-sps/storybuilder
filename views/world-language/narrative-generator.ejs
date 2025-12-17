@@ -1,0 +1,123 @@
+<style>
+  /* These styles ONLY load when the user is on the Inventory page */
+  .inventory-toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+  }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .inv-table th {
+    background-color: #2c3e50; /* Specific dark header for this app */
+    color: white;
+    text-align: left;
+    padding: 12px;
+  }
+
+  .inv-table td {
+    border-bottom: 1px solid #ddd;
+    padding: 10px;
+  }
+
+  .btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+  }
+
+  .btn-add {
+    background-color: #28a745;
+  }
+  .btn-audit {
+    background-color: #17a2b8;
+  }
+  .btn-delete {
+    background-color: #dc3545;
+  }
+</style>
+
+<div class="inventory-app">
+  <h1>Inventory Management</h1>
+
+  <div class="inventory-toolbar">
+    <div>
+      <strong>Filter:</strong>
+      <select id="categoryFilter">
+        <option value="all">All Items</option>
+        <option value="hardware">Hardware</option>
+        <option value="software">Software</option>
+      </select>
+    </div>
+    <div>
+      <button class="btn btn-add" onclick="addItem()">+ Add New Item</button>
+      <button class="btn btn-audit" onclick="startAudit()">Start Audit</button>
+    </div>
+  </div>
+
+  <table class="inv-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Item Name</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1001</td>
+        <td>Dell XPS 15</td>
+        <td>Hardware</td>
+        <td>Checked Out</td>
+        <td><button class="btn btn-delete">Remove</button></td>
+      </tr>
+      <tr>
+        <td>1002</td>
+        <td>Office 365 License</td>
+        <td>Software</td>
+        <td>Active</td>
+        <td><button class="btn btn-delete">Remove</button></td>
+      </tr>
+      <tr>
+        <td>1003</td>
+        <td>Cisco Switch 2960</td>
+        <td>Hardware</td>
+        <td>In Stock</td>
+        <td><button class="btn btn-delete">Remove</button></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // This script ONLY loads when the user is on the Inventory page.
+  // It will be placed at the very bottom of the generated HTML body.
+
+  console.log("Inventory Module Loaded");
+
+  function addItem() {
+    alert("This would open the 'Add Item' modal.");
+  }
+
+  function startAudit() {
+    // Example of DOM manipulation specific to this page
+    const table = document.querySelector(".inv-table");
+    table.style.border = "2px solid red";
+    alert("Audit Mode Enabled: Table highlighted.");
+  }
+
+  // Example event listener
+  document.getElementById("categoryFilter").addEventListener("change", (e) => {
+    console.log(`Filtering by: ${e.target.value}`);
+  });
+</script>

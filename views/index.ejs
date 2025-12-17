@@ -31,7 +31,40 @@
     display: block; /* Make whole card clickable logic */
     height: 100%;
   }
+
+  #notification-banner {
+    display: none; /* Hidden by default until API loads */
+    background-color: #d1ecf1; /* Light blue background */
+    color: #0c5460; /* Dark blue text */
+    border: 1px solid #bee5eb;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    position: relative;
+  }
+
+  #notification-banner strong {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .close-banner {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: inherit;
+  }
 </style>
+
+<div id="notification-banner">
+  <button class="close-banner" onclick="closeBanner()">&times;</button>
+  <strong><i class="fa fa-info-circle"></i> System Message:</strong>
+  <span id="banner-content">Loading...</span>
+</div>
 
 <div class="dashboard-header">
   <h1>Welcome to SHS AI Tools</h1>
@@ -71,3 +104,50 @@
     </a>
   </div>
 </div>
+
+<script>
+  async function fetchBannerMessage() {
+    const banner = document.getElementById("notification-banner");
+    const contentSpan = document.getElementById("banner-content");
+
+    try {
+      // We must use POST because your endpoint expects req.body.prompt
+      const response = await fetch("/auth/test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // Customize this prompt to whatever generates your desired notification
+        body: JSON.stringify({
+          prompt:
+            "Was authentication successful? If so, respond with a short message to display in a notification banner on the homepage of an AI tools dashboard. If not, respond with an empty message.",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Inject the AI response into the banner
+      contentSpan.innerText = data.completion;
+
+      // Show the banner
+      banner.style.display = "block";
+      setTimeout(() => {
+        closeBanner();
+      }, 10000);
+    } catch (error) {
+      console.error("Failed to load banner:", error);
+      // Optional: Show an error message or just keep the banner hidden
+    }
+  }
+
+  function closeBanner() {
+    document.getElementById("notification-banner").style.display = "none";
+  }
+
+  // Trigger the fetch when the page loads
+  document.addEventListener("DOMContentLoaded", fetchBannerMessage);
+</script>
