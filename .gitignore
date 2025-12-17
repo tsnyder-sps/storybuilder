@@ -131,3 +131,6 @@ dist
 .pnp.*
 
 .stuff.env
+
+# Storybuilder specific ignores
+archive-files/

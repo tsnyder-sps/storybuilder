@@ -1,0 +1,85 @@
+/* public/css/style.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-header {
+  background-color: #333;
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-header nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 15px;
+}
+
+.main-header a {
+  color: #fff;
+  text-decoration: none;
+  padding-bottom: 5px;
+  opacity: 0.8;
+  transition: 0.3s;
+}
+
+.main-header a:hover {
+  opacity: 1;
+}
+
+.main-header a.active {
+  border-bottom: 2px solid #fff;
+  opacity: 1;
+  font-weight: bold;
+}
+
+.content-wrapper {
+  flex: 1; /* Pushes the footer down */
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main-footer {
+  background-color: #eee;
+  text-align: center;
+  padding: 10px;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.main-footer p {
+  margin: 0;
+}
+
+/* Container for the icon to give it space */
+.app-card .icon {
+  margin-bottom: 15px;
+  color: #007bff; /* Blue color (matches your hover border) */
+  transition: transform 0.3s ease;
+}
+
+/* The actual font icon size */
+.app-card .icon i {
+  font-size: 48px; /* Makes the icon large */
+}
+
+/* Optional: Make the icon pop when you hover over the card */
+.app-card:hover .icon {
+  transform: scale(1.1); /* Grows slightly on hover */
+  color: #0056b3; /* Darker blue on hover */
+}

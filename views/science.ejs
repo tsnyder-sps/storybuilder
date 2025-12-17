@@ -1,0 +1,71 @@
+<style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .app-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background: white;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .app-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+  }
+
+  .app-card h3 {
+    margin-top: 0;
+  }
+  .app-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block; /* Make whole card clickable logic */
+    height: 100%;
+  }
+</style>
+
+<div class="dashboard-header">
+  <h1>Science AI Tools</h1>
+  <p>Tools created for science classes.</p>
+</div>
+
+<div class="dashboard-grid">
+  <div class="app-card">
+    <a href="/frq-scorecard">
+      <div class="icon"><i class="fa fa-file"></i></div>
+      <h3>FRQ Scorecard</h3>
+      <p>
+        Score and improve Free Response answers utilizing CollegeBoard's scoring
+        rubrics.
+      </p>
+    </a>
+  </div>
+
+  <div class="app-card">
+    <a href="/gradecam">
+      <div class="icon"><i class="fa fa-camera-retro"></i></div>
+      <h3>GradeCam(-ish)</h3>
+      <p>MCQ scantron, fill-in checker, test/quiz analysis</p>
+    </a>
+  </div>
+
+  <div class="app-card">
+    <a href="/teachers-assistant">
+      <div class="icon"><i class="fa fa-archive"></i></div>
+      <h3>Teachers A(I)ssistant</h3>
+      <p>
+        Generate test/quiz questions, lab analysis questions, vocab lists,
+        notes, outlines and more.
+      </p>
+    </a>
+  </div>
+</div>

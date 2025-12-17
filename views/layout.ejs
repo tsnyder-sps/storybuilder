@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title><%- title %></title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <%- style %>
+  </head>
+  <body>
+    <header class="main-header">
+      <div class="logo" style="font-weight: bolder">SHS AI TOOLS</div>
+      <nav>
+        <ul>
+          <li>
+            <a href="/" class="<%= page === 'dashboard' ? 'active' : '' %>"
+              >HOME</a
+            >
+          </li>
+          <li>
+            <a
+              href="/world-language"
+              class="<%= page === 'world-language' ? 'active' : '' %>"
+              >WORLD LANGUAGE</a
+            >
+          </li>
+          <li>
+            <a href="/science" class="<%= page === 'science' ? 'active' : '' %>"
+              >SCIENCE</a
+            >
+          </li>
+          <li>
+            <a
+              href="/it-utilities"
+              class="<%= page === 'it-utilities' ? 'active' : '' %>"
+              >IT UTILITIES</a
+            >
+          </li>
+          <li>
+            <a target="_blank" href="https://chat.scarboroughschools.org/"
+              >CHAT</a
+            >
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <div class="content-wrapper"><%- body %></div>
+
+    <footer class="main-footer">
+      <a href="https://www.scarboroughschools.org">
+        <img
+          src="/images/HD_Logo_Final.png"
+          alt="SHSHD Logo"
+          loading="lazy"
+          height="50"
+        />
+      </a>
+      <p style="font-weight: bolder">
+        SCARBOROUGH RED STORM STUDENT HELP DESK - AI PROJECT
+      </p>
+    </footer>
+
+    <script src="/js/main.js"></script>
+
+    <%- script %>
+  </body>
+</html>
