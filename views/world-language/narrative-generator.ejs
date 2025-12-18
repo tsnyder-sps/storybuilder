@@ -1,123 +1,186 @@
 <style>
-  /* These styles ONLY load when the user is on the Inventory page */
-  .inventory-toolbar {
+  .two-column-layout {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    padding: 10px;
-    background-color: #e9ecef;
-    border-radius: 4px;
+    gap: 20px;
+    width: 100%; /* Ensure it fills the space */
   }
 
-  .inv-table {
+  /* 2. Define Column Widths */
+  .left-column {
+    width: 35%;
+    flex-shrink: 0;
+    background-color: #f4f4f4;
+    padding: 15px;
+    }
+
+  .right-column {
+    flex-grow: 1; /* Takes up remaining space */
+    background-color: #fff;
+    padding: 15px;
+  }
+
+  .application-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .narrative-input {
+    height: 6vh;
     width: 100%;
-    border-collapse: collapse;
-  }
-
-  .inv-table th {
-    background-color: #2c3e50; /* Specific dark header for this app */
-    color: white;
-    text-align: left;
-    padding: 12px;
-  }
-
-  .inv-table td {
-    border-bottom: 1px solid #ddd;
-    padding: 10px;
-  }
-
-  .btn {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    color: white;
-  }
-
-  .btn-add {
-    background-color: #28a745;
-  }
-  .btn-audit {
-    background-color: #17a2b8;
-  }
-  .btn-delete {
-    background-color: #dc3545;
+    resize: none;
   }
 </style>
 
-<div class="inventory-app">
-  <h1>Inventory Management</h1>
-
-  <div class="inventory-toolbar">
-    <div>
-      <strong>Filter:</strong>
-      <select id="categoryFilter">
-        <option value="all">All Items</option>
-        <option value="hardware">Hardware</option>
-        <option value="software">Software</option>
-      </select>
+  <div class="application-header">
+    <h2>Story & Quiz Generator</h2>
+  </div>
+  
+  <div class="two-column-layout">
+    <div class="left-column">
+      <div class="narrative-generation">
+        <h4>Generate a narrative here:</h4>
+        <form>
+          <label for="vocab" id="vocabLabel">Enter comma separated target vocab here:</label><br />
+          <textarea id="vocab" class="narrative-input"></textarea><br />  
+          <label for="tense" id="tenseLabel">Enter comma separated target verb tenses here:</label><br />
+          <textarea id="tense" class="narrative-input"></textarea><br />
+          <label id="optionsLabel" for="options">Enter additional instructions here (leave blank if none):</label><br />
+          <textarea id="options" class="narrative-input"></textarea><br />
+          <label id="paragraphLabel" for="paragraphCount">Number of paragraphs:</label>
+          <input type="number" id="paragraphCount" min="1" max="1000"></input><br /><br />
+          <label id="languageLabel" for="languageSelect">Target language:</label>
+          <select name="language" id="languageSelect">
+            <option value="french" selected>French</option>
+            <option value="spanish">Spanish</option>
+            <option value="english">English</option>
+          </select>
+          <br /><br />
+          <button id="generateButton">Generate narrative</button>
+        </form>
+        <br />
+        <h4>Generate an MCQ quiz about the narrative:</h4>
+        <form>
+          <label id="questionsLabel" for="questionCount">Number of questions:</label>
+          <input type="number" id="questionCount" min="1" max="100"></input><br />
+          <label id="questionOptionLabel" for="questionOption">Number of options per question:</label>
+          <input type="number" id="questionOption" min="2" max="6"></input><br />
+          <br /><br />
+          <button id="quizGenerateButton">Generate MCQ quiz</button>
+        </form>
+      </div>
     </div>
-    <div>
-      <button class="btn btn-add" onclick="addItem()">+ Add New Item</button>
-      <button class="btn btn-audit" onclick="startAudit()">Start Audit</button>
+
+    <div class="right-column">
+      <div class="response-elements">
+        <h4 >Results will appear here:</h4>
+        <!--AI response elements from server-->
+        <div id="aiResponseBackground" class="aiResponse scrollable"></div>
+        <div id="aiResponse" class="aiResponse scrollable"></div>
+        <br />
+        <button id="selectNarrative">View narrative</button>
+        <button id="selectQuiz">View quiz</button>
+      </div>
     </div>
   </div>
 
-  <table class="inv-table">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Item Name</th>
-        <th>Category</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>1001</td>
-        <td>Dell XPS 15</td>
-        <td>Hardware</td>
-        <td>Checked Out</td>
-        <td><button class="btn btn-delete">Remove</button></td>
-      </tr>
-      <tr>
-        <td>1002</td>
-        <td>Office 365 License</td>
-        <td>Software</td>
-        <td>Active</td>
-        <td><button class="btn btn-delete">Remove</button></td>
-      </tr>
-      <tr>
-        <td>1003</td>
-        <td>Cisco Switch 2960</td>
-        <td>Hardware</td>
-        <td>In Stock</td>
-        <td><button class="btn btn-delete">Remove</button></td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-  // This script ONLY loads when the user is on the Inventory page.
-  // It will be placed at the very bottom of the generated HTML body.
+  // Response storage
+  var narrativeResponse = "";
+  var quizResponse = "";
 
-  console.log("Inventory Module Loaded");
-
-  function addItem() {
-    alert("This would open the 'Add Item' modal.");
+  // User input default values
+  document.getElementById("aiResponseBackground").value = "";
+  document.getElementById("tense").value = "";
+  document.getElementById("vocab").value = "";
+  document.getElementById("options").value = "";
+  document.getElementById("paragraphCount").value = 5;
+  document.getElementById("questionCount").value = 10;
+  document.getElementById("questionOption").value = 4;
+  // User selection vars
+  const generateButton = document.getElementById("generateButton");
+  const questionCountInput = document.getElementById("questionCount").value;
+  const questionOptionInput = document.getElementById("questionOption").value;
+  const quizGenerateButton = document.getElementById("quizGenerateButton");
+  
+  // Load narrative response to response box
+  function loadNarrative() {
+    if (narrativeResponse != "") {
+      //make sure narrative exists
+      document.getElementById("aiResponse").innerHTML = narrativeResponse;
+    } else {
+      document.getElementById("aiResponse").innerHTML = 
+        "There is no narrative to display.<br />" +
+        "Please generate a narrative first.";
+    }
   }
 
-  function startAudit() {
-    // Example of DOM manipulation specific to this page
-    const table = document.querySelector(".inv-table");
-    table.style.border = "2px solid red";
-    alert("Audit Mode Enabled: Table highlighted.");
+  // Load quiz response to response box
+  function loadQuiz() {
+    if (quizResponse != "") {
+      //make sure quiz exists
+      document.getElementById("aiResponse").innerHTML = quizResponse;
+    } else {
+      document.getElementById("aiResponse").innerHTML = 
+        "There is no quiz to display.<br />" +
+        "Please generate a quiz first.";
+    }
   }
+  
+  // Generate narrative
+  generateButton.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const vocabInput = document.getElementById("vocab").value;
+    const tenseInput = document.getElementById("tense").value;
+    const optionsInput = document.getElementById("options").value;
+    const paragraphCountInput = document.getElementById("paragraphCount").value;
+    var languageSelect = document.getElementById("languageSelect").value;
+    narrativeResponse = "";
+    document.getElementById("aiResponse").innerHTML = "Generating narrative...";
+    // Get/Validate user input
+    const vocab = vocabInput.value;
+    const tense = tenseInput.value;
+    if (vocab === "") {
+      document.getElementById("aiResponse").innerHTML = 
+        "Please enter at least one vocabulary word.";
+      return;
+    } else if (tense === "") {
+      document.getElementById("aiResponse").innerHTML = 
+        "Please enter at least one verb tense.";
+      return;
+    }
+    var addOptions = "";
+    if (optionsInput.value !== "") {
+      addOptions = optionsInput;
+    } else {
+      addOptions = "No additional instructions.";
+    }
+    const paragraphCount = paragraphCountInput;
+    const language = languageSelect;
+    // Send request to server
+    try {
+      const response = await fetch("/world-language/narrative-generator/narrative", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({vocab: vocab,tense: tense,options: addOptions,paragraphCount: paragraphCount,language: language}),
+      });
 
-  // Example event listener
-  document.getElementById("categoryFilter").addEventListener("change", (e) => {
-    console.log(`Filtering by: ${e.target.value}`);
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const narrativeResponse = data.completion;
+      document.getElementById("aiResponse").innerHTML = narrativeResponse;
+    } catch (error) {
+      console.error("Error generating narrative:", error);
+      document.getElementById("aiResponse").innerHTML = 
+        "An error occurred while generating the narrative. Please try again.";
+    }
+
+    return false;
   });
+
 </script>
