@@ -8,6 +8,7 @@ config();
 
 const app = express();
 const PORT = process.env.PORT || 3005;
+console.log(`Starting server on port ${PORT}`);
 
 // Model configuration
 const model = process.env.OPENAI_MODEL || "gemma3:12b-it-q8_0";
@@ -91,6 +92,52 @@ app.post("/auth/test", async (req, res) => {
 app.get("/inventory", (req, res) => {
   // Renders views/inventory.ejs inside views/layout.ejs
   res.render("inventory", { title: "Inventory App", page: "inventory" });
+});
+
+// debug app
+app.get("/debug", async (req, res) => {
+  console.log("Debug endpoint hit");
+  try {
+    // // Call OpenAI API
+    const completion = await openai.chat.completions.create({
+      model: model,
+      max_tokens: 8192,
+      messages: [{ role: "user", content: "Why is the sky blue?" }],
+      stream: true,
+      temperature: 1.0,
+      min_p: 0.01,
+      top_k: 64,
+      top_p: 0.95,
+    });
+
+    let aiResponse = "";
+
+    for await (const chunk of completion) {
+      //read response tokens
+
+      if (chunk.choices[0]?.delta?.content) {
+        const content = chunk.choices[0].delta.content;
+        console.log("Received chunk:", content);
+        // store the AI response
+        aiResponse += content;
+      }
+    }
+
+    console.log("Completion:", completion);
+
+    res.json({
+      completion: aiResponse,
+    });
+  } catch (error) {
+    console.error("Error calling OpenAI API:", error);
+
+    // You can check for specific error types (e.g., from OpenAI)
+    if (error.response) {
+      res.status(error.response.status).json(error.response.data);
+    } else {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
 });
 
 // 5. Start Server
