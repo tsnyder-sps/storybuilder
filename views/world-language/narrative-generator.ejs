@@ -142,9 +142,10 @@
     loadQuiz();
   });
   
-  // Generate narrative
+// Generate narrative
   generateButton.addEventListener("click", async (e) => {
     e.preventDefault();
+
     // Capture user input
     const vocab = vocabElement.value;
     const tense = tenseElement.value;
@@ -155,51 +156,97 @@
 
     document.getElementById("aiResponse").innerHTML = "Generating narrative...";
 
+    // Reset global variable
+    narrativeResponse = "";
+
     // Validate user input
     if (vocab === "") {
-      document.getElementById("aiResponse").innerHTML = 
-        "Please enter at least one vocabulary word.";
+      document.getElementById("aiResponse").innerHTML = "Please enter at least one vocabulary word.";
       return;
     } else if (tense === "") {
-      document.getElementById("aiResponse").innerHTML = 
-        "Please enter at least one verb tense.";
+      document.getElementById("aiResponse").innerHTML = "Please enter at least one verb tense.";
       return;
     }
+    
     if (addOptions !== "") {
-      addOptions = addOptions;
+        addOptions = addOptions;
     } else {
-      addOptions = "No additional instructions.";
+        addOptions = "No additional instructions.";
     }
 
     console.log("Sending request to server with data:", vocab, tense, addOptions, paragraphCount, language);
+
     // Send request to server
     try {
+      // 1. Initiate the POST request
       const response = await fetch("/world-language/narrative-generator/narrative", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({vocab: vocab,tense: tense,additional: addOptions,paragraphCount: paragraphCount,language: language}),
+        body: JSON.stringify({
+            vocab: vocab,
+            tense: tense,
+            additional: addOptions,
+            paragraphCount: paragraphCount,
+            language: language
+        }),
       });
 
       if (!response.ok) {
         throw new Error(`Server error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      // 2. Set up the Stream Reader (Replaces EventSource)
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = ""; // This holds incomplete data chunks
 
-      // Update narrative response
-      narrativeResponse = data.completion;
+      document.getElementById("aiResponse").innerHTML = ""; // Clear loading text
 
-      // Render result
-      document.getElementById("aiResponse").innerHTML = marked.parse(narrativeResponse);
+      // 3. Read the stream in a loop
+      while (true) {
+        const { value, done } = await reader.read();
+        
+        if (done) break;
+
+        // Decode the raw stream data
+        buffer += decoder.decode(value, { stream: true });
+
+        // Split data by the double newline (your SSE separator)
+        const lines = buffer.split("\n\n");
+
+        // The last item in 'lines' might be incomplete (e.g., "data: Hel"), 
+        // so we save it back to the buffer for the next packet.
+        buffer = lines.pop(); 
+
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            // Check for your custom DONE signal
+            if (trimmedLine === "data: [DONE]") {
+                return; // Stop processing
+            }
+
+            // Parse the content if it starts with "data: "
+            if (trimmedLine.startsWith("data: ")) {
+                // Remove the "data: " prefix
+                const content = trimmedLine.replace("data: ", "");
+                
+                // Append to global variable
+                narrativeResponse += content;
+                
+                // Render immediately
+                document.getElementById("aiResponse").innerHTML = marked.parse(narrativeResponse);
+            }
+        }
+      }
+
     } catch (error) {
       console.error("Error generating narrative:", error);
       document.getElementById("aiResponse").innerHTML = 
         "An error occurred while generating the narrative. Please try again.";
     }
-
-    return false;
   });
 
     // Generate quiz

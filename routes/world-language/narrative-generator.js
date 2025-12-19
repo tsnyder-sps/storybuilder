@@ -42,6 +42,10 @@ router.post("/narrative", async (req, res) => {
     if (!fullPrompt) {
       return res.status(400).json({ error: "Prompt is required." });
     }
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Transfer-Encoding", "chunked");
+    res.setHeader("Cache-Control", "no-cache, no-transform"); // Stop caching
+    res.setHeader("X-Accel-Buffering", "no");
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
@@ -56,29 +60,19 @@ router.post("/narrative", async (req, res) => {
       top_p: 0.95,
     });
 
-    let aiResponse = "";
-
     for await (const chunk of completion) {
-      //read response tokens
       if (chunk.choices[0]?.delta?.content) {
         const content = chunk.choices[0].delta.content;
-        // store the AI response
-        aiResponse += content;
+        // Send the content to the client
+        res.write(`data: ${content}\n\n`);
       }
     }
-
-    res.json({
-      completion: aiResponse,
-    });
+    res.write(`data: [DONE]\n\n`);
   } catch (error) {
-    console.error("Error calling OpenAI API:", error);
-
-    // You can check for specific error types (e.g., from OpenAI)
-    if (error.response) {
-      res.status(error.response.status).json(error.response.data);
-    } else {
-      res.status(500).json({ error: "Internal server error" });
-    }
+    console.error("Streaming Error:", error);
+    res.write("data: Error processing request. \n\n");
+  } finally {
+    res.end();
   }
 });
 
