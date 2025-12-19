@@ -22,24 +22,36 @@ router.get("/", (req, res) => {
 });
 
 //Matthew's narrative quiz generation endpoints
-router.post("/quiz", async (req, res) => {
-  const promptReq = req.body.prompt;
+router.post("/narrative", async (req, res) => {
+  console.log("Received narrative generation request:", req.body);
+  const vocabReq = req.body.vocab || "";
+  const tenseReq = req.body.tense || "present";
+  const additionalReq = req.body.additional || "";
+  const paragraphCountReq = req.body.paragraphCount || 5;
+  const languageReq = req.body.language || "French";
+  var fullPrompt = `Write me a creative narrative in ${languageReq} that features the following vocabulary words: ${vocabReq}. The narrative may only use the following verb tenses: ${tenseReq}. The narrative must be only ${paragraphCountReq} paragraphs long. Return only the narrative.`;
+  if (additionalReq != "") {
+    //user gave extra info
+    fullPrompt =
+      fullPrompt +
+      " Here are some additional instructions for the narrative: " +
+      additionalReq;
+  }
   try {
-    const { prompt = promptReq, max_tokens = 8192 } = req.body;
-
     // Validate the prompt
-    if (!prompt) {
+    if (!fullPrompt) {
       return res.status(400).json({ error: "Prompt is required." });
     }
 
-    // // Call OpenAI API
+    // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: model,
-      max_tokens: max_tokens,
-      messages: [{ role: "user", content: prompt }],
+      max_tokens: 8192,
+      messages: [{ role: "user", content: fullPrompt }],
       stream: true,
-      temperature: 1.0,
+      temperature: 2.0,
       min_p: 0.01,
+      repeat_penalty: 1.0,
       top_k: 64,
       top_p: 0.95,
     });
@@ -70,22 +82,15 @@ router.post("/quiz", async (req, res) => {
   }
 });
 
-// Matthew's narrative generation endpoint
-router.post("/narrative", async (req, res) => {
-  console.log("Received narrative generation request:", req.body);
-  const vocabReq = req.body.vocab || "";
-  const tenseReq = req.body.tense || "present";
-  const additionalReq = req.body.additional || "";
-  const paragraphCountReq = req.body.paragraphCount || 5;
-  const languageReq = req.body.language || "French";
-  var fullPrompt = `Write me a creative narrative in ${languageReq} that features the following vocabulary words: ${vocabReq}. The narrative may only use the following verb tenses: ${tenseReq}. The narrative must be only ${paragraphCountReq} paragraphs long. Return only the narrative.`;
-  if (additionalReq != "") {
-    //user gave extra info
-    fullPrompt =
-      fullPrompt +
-      " Here are some additional instructions for the narrative: " +
-      additionalReq;
-  }
+// Matthew's quiz generation endpoint
+router.post("/quiz", async (req, res) => {
+  const questionsReq = req.body.questions || 10;
+  const optionsReq = req.body.options || 4;
+  const narrativeReq = req.body.narrative;
+  const languageSelect = req.body.language;
+
+  var fullPrompt = `Generate a multiple choice quiz in ${languageSelect} with ${questionsReq} questions that each have ${optionsReq} answer choices that is about the following narrative: ${narrativeReq}. Use sequential letters of the roman alphabet to denote answer options. Place the HTML tag <br> before the letter denoting each answer option. Use sequential numbers to denote the questions. Place an answer key after the quiz. Return only the quiz, including the answer key.`;
+
   try {
     // Validate the prompt
     if (!fullPrompt) {
@@ -98,7 +103,7 @@ router.post("/narrative", async (req, res) => {
       max_tokens: 8192,
       messages: [{ role: "user", content: fullPrompt }],
       stream: true,
-      temperature: 2.0,
+      temperature: 0.7,
       min_p: 0.01,
       repeat_penalty: 1.0,
       top_k: 64,

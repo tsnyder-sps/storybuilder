@@ -89,25 +89,30 @@
   var narrativeResponse = "";
   var quizResponse = "";
 
-  // User input default values
-  document.getElementById("aiResponseBackground").value = "";
-  document.getElementById("tense").value = "";
-  document.getElementById("vocab").value = "";
-  document.getElementById("options").value = "";
+  // Set user input default values
   document.getElementById("paragraphCount").value = 5;
   document.getElementById("questionCount").value = 10;
   document.getElementById("questionOption").value = 4;
-  // User selection vars
+
+  // Select elements for narrative generation
+  const vocabElement = document.getElementById("vocab");
+  const tenseElement = document.getElementById("tense");
+  const optionsElement = document.getElementById("options");
+  const paragraphCountElement = document.getElementById("paragraphCount");
+  const languageSelectElement = document.getElementById("languageSelect");
   const generateButton = document.getElementById("generateButton");
-  const questionCountInput = document.getElementById("questionCount").value;
-  const questionOptionInput = document.getElementById("questionOption").value;
+
+  // Select elements for quiz generation
+  const questionCountElement = document.getElementById("questionCount");
+  const questionOptionElement = document.getElementById("questionOption");
   const quizGenerateButton = document.getElementById("quizGenerateButton");
+  
   
   // Load narrative response to response box
   function loadNarrative() {
     if (narrativeResponse != "") {
       //make sure narrative exists
-      document.getElementById("aiResponse").innerHTML = narrativeResponse;
+      document.getElementById("aiResponse").innerHTML = marked.parse(narrativeResponse);
     } else {
       document.getElementById("aiResponse").innerHTML = 
         "There is no narrative to display.<br />" +
@@ -119,7 +124,7 @@
   function loadQuiz() {
     if (quizResponse != "") {
       //make sure quiz exists
-      document.getElementById("aiResponse").innerHTML = quizResponse;
+      document.getElementById("aiResponse").innerHTML = marked.parse(quizResponse);
     } else {
       document.getElementById("aiResponse").innerHTML = 
         "There is no quiz to display.<br />" +
@@ -127,19 +132,30 @@
     }
   }
   
+  // Select narrative button
+  document.getElementById("selectNarrative").addEventListener("click", () => {
+    loadNarrative();
+  });
+
+  // Select quiz button
+  document.getElementById("selectQuiz").addEventListener("click", () => {
+    loadQuiz();
+  });
+  
   // Generate narrative
   generateButton.addEventListener("click", async (e) => {
     e.preventDefault();
-    const vocabInput = document.getElementById("vocab").value;
-    const tenseInput = document.getElementById("tense").value;
-    const optionsInput = document.getElementById("options").value;
-    const paragraphCountInput = document.getElementById("paragraphCount").value;
-    var languageSelect = document.getElementById("languageSelect").value;
-    narrativeResponse = "";
+    // Capture user input
+    const vocab = vocabElement.value;
+    const tense = tenseElement.value;
+    const paragraphCount = paragraphCountElement.value;
+    const language = languageSelectElement.value;
+
+    let addOptions = optionsElement.value;
+
     document.getElementById("aiResponse").innerHTML = "Generating narrative...";
-    // Get/Validate user input
-    const vocab = vocabInput.value;
-    const tense = tenseInput.value;
+
+    // Validate user input
     if (vocab === "") {
       document.getElementById("aiResponse").innerHTML = 
         "Please enter at least one vocabulary word.";
@@ -149,14 +165,13 @@
         "Please enter at least one verb tense.";
       return;
     }
-    var addOptions = "";
-    if (optionsInput.value !== "") {
-      addOptions = optionsInput;
+    if (addOptions !== "") {
+      addOptions = addOptions;
     } else {
       addOptions = "No additional instructions.";
     }
-    const paragraphCount = paragraphCountInput;
-    const language = languageSelect;
+
+    console.log("Sending request to server with data:", vocab, tense, addOptions, paragraphCount, language);
     // Send request to server
     try {
       const response = await fetch("/world-language/narrative-generator/narrative", {
@@ -164,7 +179,7 @@
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({vocab: vocab,tense: tense,options: addOptions,paragraphCount: paragraphCount,language: language}),
+        body: JSON.stringify({vocab: vocab,tense: tense,additional: addOptions,paragraphCount: paragraphCount,language: language}),
       });
 
       if (!response.ok) {
@@ -172,12 +187,68 @@
       }
 
       const data = await response.json();
-      const narrativeResponse = data.completion;
-      document.getElementById("aiResponse").innerHTML = narrativeResponse;
+
+      // Update narrative response
+      narrativeResponse = data.completion;
+
+      // Render result
+      document.getElementById("aiResponse").innerHTML = marked.parse(narrativeResponse);
     } catch (error) {
       console.error("Error generating narrative:", error);
       document.getElementById("aiResponse").innerHTML = 
         "An error occurred while generating the narrative. Please try again.";
+    }
+
+    return false;
+  });
+
+    // Generate quiz
+  quizGenerateButton.addEventListener("click", async (e) => {
+    e.preventDefault();
+    // Capture user input
+    const questions = questionCountElement.value;
+    const mcqOptions = questionOptionElement.value;
+    const language = languageSelectElement.value;
+
+    let addOptions = optionsElement.value;
+
+    document.getElementById("aiResponse").innerHTML = "Generating quiz...";
+    // Validate user input
+    if (questions === "") {
+      document.getElementById("aiResponse").innerHTML = 
+        "Please enter at least one question.";
+      return;
+    } else if (mcqOptions === "") {
+      document.getElementById("aiResponse").innerHTML = 
+        "Please enter at least one multiple choice option.";
+      return;
+    }
+
+    // Send request to server
+    try {
+      const response = await fetch("/world-language/narrative-generator/quiz", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({language: language,questionCount: questions,optionCount: mcqOptions,narrative: narrativeResponse}),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Update quiz response
+      quizResponse = data.completion;
+
+      // Render result
+      document.getElementById("aiResponse").innerHTML = marked.parse(quizResponse);
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      document.getElementById("aiResponse").innerHTML = 
+        "An error occurred while generating the quiz. Please try again.";
     }
 
     return false;
