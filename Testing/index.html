@@ -12,14 +12,16 @@
     </head>
 
     <body>
-        <h1>Here's a surprise...</h1>
+        <h1>Ask me a question!</h1>
         <div id="big_square">
             <h1 id="output_title">What will I say?</h1>
-            <t id="output">Press the button to find out!</t>
+            <t id="output"></t>
         </div>
+        <input id="prompt_box" type="text" value="">
         <button id="btn">Press me!</button>
         <script>
             document.getElementById("btn").addEventListener("click", () => {
+                document.getElementById("prompt_box").value = null;
                 fetch("frontend") // Calls the route.
                     .then(res => res.json()) // Converts the response to JSON.
                     .then(data => { // Sets the output text to the response data.

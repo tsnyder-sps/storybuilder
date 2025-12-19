@@ -1,9 +1,9 @@
 import express from 'express';
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
-// Serve static files
+// Serve static files from 'Testing' folder.
 app.use(express.static('Testing'));
 
 app.get('/frontend', (req, res) => {

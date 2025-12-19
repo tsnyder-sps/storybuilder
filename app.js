@@ -34,7 +34,7 @@ app.use(express.json());
 // get is method, app initializes express.
 // ´/'is where the url for the client will go.
 app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'index.html'));
+  res.sendFile(path.join(process.cwd(), 'index.html')); // Sends individual file
 });
 
 // Get conversation history
