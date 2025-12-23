@@ -1,0 +1,421 @@
+<style>
+  /* --- LAYOUT & CONTAINERS --- */
+  .app-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .application-header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #2c3e50;
+  }
+
+  /* --- NAVIGATION TABS --- */
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+  }
+
+  nav button {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  nav button.active-tab {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
+  }
+
+  /* --- PAGE CONTENT --- */
+  .page {
+    display: none; /* Hidden by default */
+    background: #fff;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .page.active {
+    display: block; /* Show when active */
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  h4 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+
+  /* --- CHAT AREA --- */
+  .chat-history {
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    max-width: 80%;
+    line-height: 1.5;
+    position: relative;
+    word-wrap: break-word;
+  }
+
+  .user-message {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end; /* Push to right */
+    border-bottom-right-radius: 2px;
+  }
+
+  .ai-message {
+    background-color: #fff;
+    color: #333;
+    border: 1px solid #dee2e6;
+    align-self: flex-start; /* Push to left */
+    border-bottom-left-radius: 2px;
+  }
+
+  /* --- INPUT AREA --- */
+  .input-area {
+    display: flex;
+    gap: 10px;
+  }
+
+  input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+  }
+
+  .btn-primary {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 0 25px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background-color: #218838;
+  }
+  .btn-primary:disabled {
+    background-color: #94d3a2;
+    cursor: not-allowed;
+  }
+
+  .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-secondary:hover {
+    background-color: #5a6268;
+  }
+
+  /* Markdown Styles inside Chat */
+  .ai-message p {
+    margin: 0 0 10px 0;
+  }
+  .ai-message ul {
+    margin: 0 0 10px 20px;
+  }
+  .ai-message pre {
+    background: #f1f1f1;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+</style>
+
+<div class="app-container">
+  <div class="application-header">
+    <h2>Verb Conjugation Practice</h2>
+  </div>
+
+  <nav id="mainNav">
+    <button onclick="switchTab('home', this)" class="active-tab">Home</button>
+    <button onclick="switchTab('conjugation-help', this)">Conjugator</button>
+    <button onclick="switchTab('conjugation-practice', this)">Practice</button>
+  </nav>
+
+  <div id="home" class="page active">
+    <h4>Welcome</h4>
+    <p>Select a tool from the menu above:</p>
+    <ul>
+      <li>
+        <strong>Conjugator:</strong> Enter a verb to see full conjugation
+        tables.
+      </li>
+      <li>
+        <strong>Practice:</strong> Roleplay with the AI to test your skills.
+      </li>
+    </ul>
+  </div>
+
+  <div id="conjugation-help" class="page">
+    <h4>Verb Conjugator</h4>
+    <div id="chat-conjugator" class="chat-history"></div>
+    <div class="input-area">
+      <input
+        type="text"
+        id="input-conjugator"
+        placeholder="Type a French verb (e.g. manger)..."
+      />
+      <button id="btn-send-conjugator" class="btn-primary">Conjugate</button>
+      <button
+        id="btn-clear-conjugator"
+        class="btn-secondary"
+        title="Clear History"
+      >
+        ↺
+      </button>
+    </div>
+  </div>
+
+  <div id="conjugation-practice" class="page">
+    <h4>Interactive Practice</h4>
+    <div id="chat-practice" class="chat-history"></div>
+    <div class="input-area">
+      <input
+        type="text"
+        id="input-practice"
+        placeholder="e.g. 'Quiz me on Imparfait'..."
+      />
+      <button id="btn-send-practice" class="btn-primary">Send</button>
+      <button
+        id="btn-clear-practice"
+        class="btn-secondary"
+        title="Clear History"
+      >
+        ↺
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+  // --- TAB LOGIC ---
+  function switchTab(pageId, btnElement) {
+    // 1. Hide all pages
+    document
+      .querySelectorAll(".page")
+      .forEach((p) => p.classList.remove("active"));
+    // 2. Show target page
+    document.getElementById(pageId).classList.add("active");
+
+    // 3. Update Button Styles
+    document
+      .querySelectorAll("nav button")
+      .forEach((b) => b.classList.remove("active-tab"));
+    if (btnElement) btnElement.classList.add("active-tab");
+  }
+
+  // --- REUSABLE CHAT CLASS ---
+  class ChatInterface {
+    constructor(config) {
+      this.containerId = config.containerId;
+      this.inputId = config.inputId;
+      this.sendBtnId = config.sendBtnId;
+      this.clearBtnId = config.clearBtnId;
+      this.storageKey = config.storageKey;
+      this.systemWrapper = config.systemWrapper || ((msg) => msg); // Optional function to wrap prompts
+
+      // DOM Elements
+      this.container = document.getElementById(this.containerId);
+      this.input = document.getElementById(this.inputId);
+      this.sendBtn = document.getElementById(this.sendBtnId);
+      this.clearBtn = document.getElementById(this.clearBtnId);
+
+      // State
+      this.conversationId = this.loadConversationId();
+
+      // Bind Events
+      this.sendBtn.addEventListener("click", () => this.sendMessage());
+      this.clearBtn.addEventListener("click", () => this.clearChat());
+      this.input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") this.sendMessage();
+      });
+
+      // Initial Load
+      this.loadHistory();
+    }
+
+    loadConversationId() {
+      let id = sessionStorage.getItem(this.storageKey);
+      if (!id) {
+        id =
+          "conv_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem(this.storageKey, id);
+      }
+      return id;
+    }
+
+    async loadHistory() {
+      try {
+        // Note: Ensure your server supports GET /conversation/:id
+        const res = await fetch(`/conversation/${this.conversationId}`);
+        if (res.ok) {
+          const msgs = await res.json();
+          this.container.innerHTML = "";
+          msgs.forEach((m) => this.appendMessage(m.content, m.role));
+        }
+      } catch (e) {
+        console.error("Load error", e);
+      }
+    }
+
+    async clearChat() {
+      try {
+        // Note: Ensure your server supports DELETE /conversation/:id
+        await fetch(`/conversation/${this.conversationId}`, {
+          method: "DELETE",
+        });
+        this.conversationId =
+          "conv_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem(this.storageKey, this.conversationId);
+        this.container.innerHTML = "";
+      } catch (e) {
+        console.error("Clear error", e);
+      }
+    }
+
+    appendMessage(text, role) {
+      const div = document.createElement("div");
+      div.className = `message ${
+        role === "user" ? "user-message" : "ai-message"
+      }`;
+
+      // Use Markdown for AI, Plain text for User
+      if (role === "ai") {
+        div.innerHTML = marked.parse(text);
+      } else {
+        div.textContent = text;
+      }
+
+      this.container.appendChild(div);
+      this.container.scrollTop = this.container.scrollHeight;
+    }
+
+    async sendMessage() {
+      const text = this.input.value.trim();
+      if (!text) return;
+
+      // UI State
+      this.input.value = "";
+      this.input.disabled = true;
+      this.sendBtn.disabled = true;
+
+      // 1. Show User Message
+      this.appendMessage(text, "user");
+
+      // 2. Prepare Prompt (Apply wrapper if defined)
+      const finalPrompt = this.systemWrapper(text);
+
+      try {
+        // 3. POST Request (Standard, Reliable)
+        const response = await fetch("/chat/message", {
+          // CHANGE ENDPOINT TO YOUR POST HANDLER
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: finalPrompt,
+            conversationId: this.conversationId,
+          }),
+        });
+
+        const data = await response.json();
+
+        // 4. Show AI Response
+        if (data.completion) {
+          this.appendMessage(data.completion, "ai");
+        } else {
+          this.appendMessage("Error: No response received.", "ai");
+        }
+      } catch (error) {
+        console.error(error);
+        this.appendMessage("Error connecting to server.", "ai");
+      } finally {
+        this.input.disabled = false;
+        this.sendBtn.disabled = false;
+        this.input.focus();
+      }
+    }
+  }
+
+  // --- INITIALIZE INSTANCES ---
+
+  // 1. CONJUGATOR INSTANCE
+  const conjugator = new ChatInterface({
+    containerId: "chat-conjugator",
+    inputId: "input-conjugator",
+    sendBtnId: "btn-send-conjugator",
+    clearBtnId: "btn-clear-conjugator",
+    storageKey: "conv_conjugator",
+    // Logic specific to this tab: wrap the user input
+    systemWrapper: (verb) => {
+      return `Write a full list of present, passe compose, imparfait, future, subjonctif, and conditional conjugations for: ${verb}. Return ONLY the tables.`;
+    },
+  });
+
+  // 2. PRACTICE INSTANCE
+  const practice = new ChatInterface({
+    containerId: "chat-practice",
+    inputId: "input-practice",
+    sendBtnId: "btn-send-practice",
+    clearBtnId: "btn-clear-practice",
+    storageKey: "conv_practice",
+    // No wrapper needed, just pass the raw input
+    systemWrapper: (text) => text,
+  });
+</script>

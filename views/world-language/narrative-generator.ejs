@@ -1,5 +1,10 @@
 <style>
   /* --- Layout wrappers --- */
+  .app-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
   .two-column-layout {
     display: flex;
     gap: 30px; /* Increased gap for breathing room */
@@ -152,54 +157,57 @@
   }
 </style>
 
-  <div class="application-header">
-    <h2>Story & Quiz Generator</h2>
-  </div>
-  
-  <div class="two-column-layout">
-    <div class="left-column">
-      <div class="narrative-generation">
-        <h4>Generate a narrative here:</h4>
-        <form>
-          <label for="vocab" id="vocabLabel">Enter comma separated target vocab here:</label>
-          <textarea id="vocab" class="narrative-input"></textarea> 
-          <label for="tense" id="tenseLabel">Enter comma separated target verb tenses here:</label>
-          <textarea id="tense" class="narrative-input"></textarea>
-          <label id="optionsLabel" for="options">Enter additional instructions here (leave blank if none):</label>
-          <textarea id="options" class="narrative-input"></textarea>
-          <label id="paragraphLabel" for="paragraphCount">Number of paragraphs:</label>
-          <input type="number" id="paragraphCount" min="1" max="1000"></input>
-          <label id="languageLabel" for="languageSelect">Target language:</label>
-          <select name="language" id="languageSelect">
-            <option value="french" selected>French</option>
-            <option value="spanish">Spanish</option>
-            <option value="english">English</option>
-          </select>
-          <button id="generateButton">Generate narrative</button>
-        </form>
-        <h4>Generate an MCQ quiz about the narrative:</h4>
-        <form>
-          <label id="questionsLabel" for="questionCount">Number of questions:</label>
-          <input type="number" id="questionCount" min="1" max="100"></input>
-          <label id="questionOptionLabel" for="questionOption">Number of options per question:</label>
-          <input type="number" id="questionOption" min="2" max="6"></input>
-          <button id="quizGenerateButton">Generate MCQ quiz</button>
-        </form>
-      </div>
+  <div class="app-container">
+    <div class="application-header">
+      <h2>Story & Quiz Generator</h2>
     </div>
+  
+  
+    <div class="two-column-layout">
+      <div class="left-column">
+        <div class="narrative-generation">
+          <h4>Generate a narrative here:</h4>
+          <form>
+            <label for="vocab" id="vocabLabel">Enter comma separated target vocab here:</label>
+            <textarea id="vocab" class="narrative-input"></textarea> 
+            <label for="tense" id="tenseLabel">Enter comma separated target verb tenses here:</label>
+            <textarea id="tense" class="narrative-input"></textarea>
+            <label id="optionsLabel" for="options">Enter additional instructions here (leave blank if none):</label>
+            <textarea id="options" class="narrative-input"></textarea>
+            <label id="paragraphLabel" for="paragraphCount">Number of paragraphs:</label>
+            <input type="number" id="paragraphCount" min="1" max="1000"></input>
+            <label id="languageLabel" for="languageSelect">Target language:</label>
+            <select name="language" id="languageSelect">
+              <option value="french" selected>French</option>
+              <option value="spanish">Spanish</option>
+              <option value="english">English</option>
+            </select>
+            <button id="generateButton">Generate narrative</button>
+          </form>
+          <h4>Generate an MCQ quiz about the narrative:</h4>
+          <form>
+            <label id="questionsLabel" for="questionCount">Number of questions:</label>
+            <input type="number" id="questionCount" min="1" max="100"></input>
+            <label id="questionOptionLabel" for="questionOption">Number of options per question:</label>
+            <input type="number" id="questionOption" min="2" max="6"></input>
+            <button id="quizGenerateButton">Generate MCQ quiz</button>
+          </form>
+        </div>
+      </div>
 
-    <div class="right-column">
-      <div class="response-elements">
-        <h4 >Results will appear here:</h4>
-        <!--AI response elements from server-->
-        <div id="aiResponseBackground" class="aiResponse scrollable"></div>
-        <div id="aiResponse" class="aiResponse scrollable"></div>
-        <br />
-        <button id="selectNarrative">View narrative</button>
-        <button id="selectQuiz">View quiz</button>
+      <div class="right-column">
+        <div class="response-elements">
+          <h4 >Results will appear here:</h4>
+          <!--AI response elements from server-->
+          <div id="aiResponseBackground" class="aiResponse scrollable"></div>
+          <div id="aiResponse" class="aiResponse scrollable"></div>
+          <br />
+          <button id="selectNarrative">View narrative</button>
+          <button id="selectQuiz">View quiz</button>
 
-        <button id="exportNarrativeBtn" class="exportBtn">Export Narrative</button>
-        <button id="exportQuizBtn" class="exportBtn">Export Quiz</button>
+          <button id="exportNarrativeBtn" class="exportBtn">Export Narrative</button>
+          <button id="exportQuizBtn" class="exportBtn">Export Quiz</button>
+        </div>
       </div>
     </div>
   </div>
