@@ -29,6 +29,19 @@
     width: 100%;
     resize: none;
   }
+
+  .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: #2196f3;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+}
 </style>
 
   <div class="application-header">
@@ -141,7 +154,7 @@
   document.getElementById("selectQuiz").addEventListener("click", () => {
     loadQuiz();
   });
-  
+
 // Generate narrative
   generateButton.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -155,6 +168,10 @@
     let addOptions = optionsElement.value;
 
     document.getElementById("aiResponse").innerHTML = "Generating narrative...";
+    const cursor = document.createElement('span');
+    cursor.className = "cursor";
+    document.getElementById("aiResponse").appendChild(cursor);
+
 
     // Reset global variable
     narrativeResponse = "";
@@ -197,57 +214,23 @@
         throw new Error(`Server error: ${response.statusText}`);
       }
 
-      // 2. Set up the Stream Reader (Replaces EventSource)
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let buffer = ""; // This holds incomplete data chunks
-
-      document.getElementById("aiResponse").innerHTML = ""; // Clear loading text
-
-      // 3. Read the stream in a loop
-      while (true) {
-        const { value, done } = await reader.read();
-        
-        if (done) break;
-
-        // Decode the raw stream data
-        buffer += decoder.decode(value, { stream: true });
-
-        // Split data by the double newline (your SSE separator)
-        const lines = buffer.split("\n\n");
-
-        // The last item in 'lines' might be incomplete (e.g., "data: Hel"), 
-        // so we save it back to the buffer for the next packet.
-        buffer = lines.pop(); 
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
-
-            // Check for your custom DONE signal
-            if (trimmedLine === "data: [DONE]") {
-                return; // Stop processing
-            }
-
-            // Parse the content if it starts with "data: "
-            if (trimmedLine.startsWith("data: ")) {
-                // Remove the "data: " prefix
-                const content = trimmedLine.replace("data: ", "");
-                
-                // Append to global variable
-                narrativeResponse += content;
-                
-                // Render immediately
-                document.getElementById("aiResponse").innerHTML = marked.parse(narrativeResponse);
-            }
-        }
-      }
-
+      const data = await response.json();
+      const markdownText = data.completion;
+      narrativeResponse = markdownText;
+      const htmlText = marked.parse(markdownText);
+      document.getElementById("aiResponse").innerHTML = "";
+      document.getElementById("aiResponse").innerHTML = htmlText;
+      
     } catch (error) {
-      console.error("Error generating narrative:", error);
+      console.error(error);
       document.getElementById("aiResponse").innerHTML = 
         "An error occurred while generating the narrative. Please try again.";
     }
+
+    return false;
   });
+
+      
 
     // Generate quiz
   quizGenerateButton.addEventListener("click", async (e) => {
@@ -260,6 +243,10 @@
     let addOptions = optionsElement.value;
 
     document.getElementById("aiResponse").innerHTML = "Generating quiz...";
+    const cursor = document.createElement('span');
+    cursor.className = "cursor";
+    document.getElementById("aiResponse").appendChild(cursor);
+
     // Validate user input
     if (questions === "") {
       document.getElementById("aiResponse").innerHTML = 
