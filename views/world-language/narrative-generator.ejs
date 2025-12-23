@@ -1,35 +1,139 @@
 <style>
+  /* --- Layout wrappers --- */
   .two-column-layout {
     display: flex;
-    gap: 20px;
-    width: 100%; /* Ensure it fills the space */
+    gap: 30px; /* Increased gap for breathing room */
+    width: 100%;
+    align-items: flex-start; /* Prevents columns from stretching unnecessarily */
   }
-
-  /* 2. Define Column Widths */
   .left-column {
     width: 35%;
     flex-shrink: 0;
-    background-color: #f4f4f4;
-    padding: 15px;
-    }
-
+    background-color: #f8f9fa; /* Slightly lighter gray */
+    padding: 25px;
+    border-radius: 8px; /* Rounded card look */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow */
+    border: 1px solid #e9ecef;
+  }
   .right-column {
-    flex-grow: 1; /* Takes up remaining space */
+    flex-grow: 1;
     background-color: #fff;
-    padding: 15px;
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    min-height: 500px; /* Visual balance if empty */
+  }
+  h4 {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block; /* Ensures label sits above input */
+    font-size: 1rem;
   }
 
   .application-header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    color: #2c3e50;
   }
-
-  .narrative-input {
-    height: 6vh;
+/* --- Form elements --- */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Spacing between form groups */
+  }
+  label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block; /* Ensures label sits above input */
+    font-size: 0.8rem;
+  }
+/* Unified Input Styles */
+  .narrative-input, 
+  input[type="number"], 
+  select {
     width: 100%;
-    resize: none;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    box-sizing: border-box; /* Prevents padding from breaking width */
+    transition: border-color 0.2s;
   }
-
+  .narrative-input {
+    height: 80px; /* Slightly taller for ease of typing */
+    resize: none; /* Prevents resizing */
+  }
+  /* Focus States (Accessibility & UI) */
+  .narrative-input:focus, 
+  input[type="number"]:focus, 
+  select:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* Blue glow */
+  }
+  /* --- BUTTONS --- */
+  button {
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: inline-block;
+  }
+  /* Primary Action Buttons (Generate) */
+  #generateButton, 
+  #quizGenerateButton {
+    background-color: #007bff; /* Primary Blue */
+    color: white;
+    width: 100%; /* Full width for main actions */
+    margin-top: 10px;
+  }
+  #generateButton:hover, 
+  #quizGenerateButton:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px); /* Subtle lift effect */
+  }
+  /* Secondary Buttons (View Toggles) */
+  #selectNarrative, 
+  #selectQuiz {
+    background-color: #6c757d; /* Gray */
+    color: white;
+    margin-right: 5px;
+  }
+  #selectNarrative:hover, 
+  #selectQuiz:hover {
+    background-color: #5a6268;
+  }
+  /* Success/Export Buttons */
+  #exportNarrativeBtn, 
+  #exportQuizBtn {
+    background-color: #28a745; /* Green */
+    color: white;
+    margin-top: 15px;
+    font-size: 0.85rem;
+  }
+  #exportNarrativeBtn:hover, 
+  #exportQuizBtn:hover {
+    background-color: #218838;
+  }
+  /* --- OUTPUT AREA --- */
+  .aiResponse {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: #333;
+    font-size: 1.05rem;
+  }
+  /* Headings inside the AI response */
+  .aiResponse h1, .aiResponse h2, .aiResponse h3 {
+    margin-top: 0;
+    color: #2c3e50;
+  }
   .cursor {
     display: inline-block;
     width: 2px;
@@ -38,10 +142,14 @@
     margin-left: 2px;
     animation: blink 1s infinite;
   }
-
   @keyframes blink {
     50% { opacity: 0; }
 }
+
+  .exportBtn {
+    background-color: #28a745;
+    color: white;
+  }
 </style>
 
   <div class="application-header">
@@ -53,31 +161,28 @@
       <div class="narrative-generation">
         <h4>Generate a narrative here:</h4>
         <form>
-          <label for="vocab" id="vocabLabel">Enter comma separated target vocab here:</label><br />
-          <textarea id="vocab" class="narrative-input"></textarea><br />  
-          <label for="tense" id="tenseLabel">Enter comma separated target verb tenses here:</label><br />
-          <textarea id="tense" class="narrative-input"></textarea><br />
-          <label id="optionsLabel" for="options">Enter additional instructions here (leave blank if none):</label><br />
-          <textarea id="options" class="narrative-input"></textarea><br />
+          <label for="vocab" id="vocabLabel">Enter comma separated target vocab here:</label>
+          <textarea id="vocab" class="narrative-input"></textarea> 
+          <label for="tense" id="tenseLabel">Enter comma separated target verb tenses here:</label>
+          <textarea id="tense" class="narrative-input"></textarea>
+          <label id="optionsLabel" for="options">Enter additional instructions here (leave blank if none):</label>
+          <textarea id="options" class="narrative-input"></textarea>
           <label id="paragraphLabel" for="paragraphCount">Number of paragraphs:</label>
-          <input type="number" id="paragraphCount" min="1" max="1000"></input><br /><br />
+          <input type="number" id="paragraphCount" min="1" max="1000"></input>
           <label id="languageLabel" for="languageSelect">Target language:</label>
           <select name="language" id="languageSelect">
             <option value="french" selected>French</option>
             <option value="spanish">Spanish</option>
             <option value="english">English</option>
           </select>
-          <br /><br />
           <button id="generateButton">Generate narrative</button>
         </form>
-        <br />
         <h4>Generate an MCQ quiz about the narrative:</h4>
         <form>
           <label id="questionsLabel" for="questionCount">Number of questions:</label>
-          <input type="number" id="questionCount" min="1" max="100"></input><br />
+          <input type="number" id="questionCount" min="1" max="100"></input>
           <label id="questionOptionLabel" for="questionOption">Number of options per question:</label>
-          <input type="number" id="questionOption" min="2" max="6"></input><br />
-          <br /><br />
+          <input type="number" id="questionOption" min="2" max="6"></input>
           <button id="quizGenerateButton">Generate MCQ quiz</button>
         </form>
       </div>
@@ -92,6 +197,9 @@
         <br />
         <button id="selectNarrative">View narrative</button>
         <button id="selectQuiz">View quiz</button>
+
+        <button id="exportNarrativeBtn" class="exportBtn">Export Narrative</button>
+        <button id="exportQuizBtn" class="exportBtn">Export Quiz</button>
       </div>
     </div>
   </div>
@@ -101,6 +209,7 @@
   // Response storage
   var narrativeResponse = "";
   var quizResponse = "";
+  var narrativeTitle = "";
 
   // Set user input default values
   document.getElementById("paragraphCount").value = 5;
@@ -155,6 +264,64 @@
     loadQuiz();
   });
 
+  // This function creates a .doc file from HTML content
+ function exportToDoc(filename, content) {
+    // 1. Define the XML Namespaces Word needs
+    // 2. Add an embedded CSS block to force styling
+    const header = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+            xmlns:w='urn:schemas-microsoft-com:office:word' 
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Export</title>
+        <style>
+          /* Set the default document font */
+          body { 
+            font-family: 'Times New Roman', serif; 
+            font-size: 12pt; 
+            line-height: 1.5; 
+            margin: 0;
+            padding: 0;
+          }
+          
+          /* CRITICAL FIX: Reset margins on standard tags */
+          /* This stops the first paragraph from jumping or having huge gaps */
+          p { margin: 0 0 1em 0; }
+          
+          h1 { font-size: 18pt; margin-bottom: 0.5em; font-weight: bold; }
+          h2 { font-size: 16pt; margin-bottom: 0.5em; font-weight: bold; }
+          h3 { font-size: 14pt; margin-bottom: 0.5em; font-weight: bold; }
+          
+          /* Quiz specific styling (if you use lists) */
+          ul, ol { margin-top: 0; margin-bottom: 1em; }
+        </style>
+      </head>
+      <body>
+      <div class="Section1">
+    `;
+
+    const footer = `
+      </div>
+      </body>
+      </html>
+    `;
+    
+    // Combine them
+    // Note: We use marked.parse(content) in the button listener, so 'content' passed here is already HTML
+    const sourceHTML = header + content + footer;
+    
+    // Create the Blob
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    
+    // Trigger Download
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = filename + '.doc';
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
+  }
 // Generate narrative
   generateButton.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -167,7 +334,7 @@
 
     let addOptions = optionsElement.value;
 
-    document.getElementById("aiResponse").innerHTML = "Generating narrative...";
+    document.getElementById("aiResponse").innerHTML = '<div class="loader"></div> Generating...';
     const cursor = document.createElement('span');
     cursor.className = "cursor";
     document.getElementById("aiResponse").appendChild(cursor);
@@ -215,12 +382,12 @@
       }
 
       const data = await response.json();
-      const markdownText = data.completion;
-      narrativeResponse = markdownText;
-      const htmlText = marked.parse(markdownText);
-      document.getElementById("aiResponse").innerHTML = "";
-      document.getElementById("aiResponse").innerHTML = htmlText;
-      
+      narrativeTitle = data.title || "Generated Narrative";
+      narrativeResponse = data.story;
+      // document.getElementById("responseLabel").innerHTML = ""
+      //document.getElementById("responseLabel").innerHTML = `<h4>${narrativeTitle}</h4>`;
+      const displayHTML = `<h4>${narrativeTitle}</h4>` + marked.parse(narrativeResponse);
+      document.getElementById("aiResponse").innerHTML = displayHTML;      
     } catch (error) {
       console.error(error);
       document.getElementById("aiResponse").innerHTML = 
@@ -230,7 +397,23 @@
     return false;
   });
 
+  // EXPORT BUTTON LISTENERS
+  
+  document.getElementById("exportNarrativeBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!narrativeResponse) { alert("Please generate a narrative first."); return; }
+      const htmlContent = `<h1>${narrativeTitle}</h1>` + marked.parse(narrativeResponse);
+      // Use the AI-generated title for the filename
+      exportToDoc(narrativeTitle, htmlContent);
+  });
+
+  document.getElementById("exportQuizBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      if (!quizResponse) { alert("Please generate a quiz first."); return; }
       
+      // Filename: Title + "_Quiz"
+      exportToDoc(narrativeTitle + "_Quiz", quizResponse);
+  });
 
     // Generate quiz
   quizGenerateButton.addEventListener("click", async (e) => {

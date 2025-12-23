@@ -29,13 +29,18 @@ router.post("/narrative", async (req, res) => {
   const additionalReq = req.body.additional || "";
   const paragraphCountReq = req.body.paragraphCount || 5;
   const languageReq = req.body.language || "French";
-  var fullPrompt = `Write me a creative narrative in ${languageReq} that features the following vocabulary words: ${vocabReq}. The narrative may only use the following verb tenses: ${tenseReq}. The narrative must be only ${paragraphCountReq} paragraphs long. Return only the narrative.`;
-  if (additionalReq != "") {
-    //user gave extra info
-    fullPrompt =
-      fullPrompt +
-      " Here are some additional instructions for the narrative: " +
-      additionalReq;
+  var fullPrompt = `
+    Write a creative narrative in ${languageReq} that features the following vocabulary: ${vocabReq}. 
+    Verb tenses: ${tenseReq}. 
+    Length: ${paragraphCountReq} paragraphs.
+    
+    IMPORTANT: Return your response as a valid JSON object with exactly two keys:
+    1. "title": A creative title for the narrative.
+    2. "story": The narrative text itself (you may use Markdown formatting).
+  `;
+
+  if (additionalReq !== "") {
+    fullPrompt += " Additional instructions: " + additionalReq;
   }
   try {
     // Validate the prompt
@@ -48,7 +53,8 @@ router.post("/narrative", async (req, res) => {
       model: model,
       max_tokens: 8192,
       messages: [{ role: "user", content: fullPrompt }],
-      stream: true,
+      stream: false,
+      response_format: { type: "json_object" },
       temperature: 2.0,
       min_p: 0.01,
       repeat_penalty: 1.0,
@@ -56,23 +62,46 @@ router.post("/narrative", async (req, res) => {
       top_p: 0.95,
     });
 
-    let aiResponse = "";
+    let aiRaw = completion.choices[0].message.content;
+    if (aiRaw.startsWith("```json")) {
+      aiRaw = aiRaw.replace(/^```json\s*/, "").replace(/\s*```$/, "");
+    } else if (aiRaw.startsWith("```")) {
+      aiRaw = aiRaw.replace(/^```s*/, "").replace(/\s*```$/, "");
+    }
 
-    for await (const chunk of completion) {
-      //read response tokens
-      if (chunk.choices[0]?.delta?.content) {
-        const content = chunk.choices[0].delta.content;
-        // store the AI response
-        aiResponse += content;
+    let parsedContent = {};
+
+    try {
+      parsedContent = JSON.parse(aiRaw);
+    } catch (error) {
+      console.warn(
+        "JSON parse failed. Attempting regex fallback. Raw:",
+        aiRaw,
+        "Error:",
+        error
+      );
+      const titleMatch = aiRaw.match(/"title":\s*"((?:[^"\\]|\\.)*)"/);
+      const title = titleMatch ? titleMatch[1] : "Generated Narrative";
+      const storyMatch = aiRaw.match(/"story":\s*"([\s\S]*?)"\s*}/);
+      if (storyMatch) {
+        parsedContent = {
+          title: title,
+          story: storyMatch[1].replace(/\\"/g, '"').replace(/\\n/g, "\n"), // Unescape manually,
+        };
+      } else {
+        parsedContent = {
+          title: "Generated Narrative (Raw Output)",
+          story: aiRaw,
+        };
       }
     }
-    console.log("AI response finished");
+
     res.json({
-      completion: aiResponse,
+      title: parsedContent.title,
+      story: parsedContent.story,
     });
   } catch (error) {
     console.error("Error calling OpenAI API:", error);
-
     // You can check for specific error types (e.g., from OpenAI)
     if (error.response) {
       res.status(error.response.status).json(error.response.data);
