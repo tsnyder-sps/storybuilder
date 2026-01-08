@@ -1,0 +1,284 @@
+<html>
+    
+    <head>
+
+        <style> /* Remember . is for classes and # is for IDs! */
+
+            .cursor { /*Cursor displayed while waiting for AI response.*/
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #555555;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+            }
+            .dropdown { /*Dropdown menus*/
+                background: #efefef;
+                border: 1px solid black;
+                width: 300px
+            }
+            .dropdown t:hover { /*When the user's mouse hovers over text in a dropdown...*/
+                background: #bcbcbc;
+            }
+            .message { /*Responses shown*/
+                margin-bottom: 10px;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            .ai-message {
+                background-color: #efefef;
+            }
+
+            #big-title { 
+                text-align: center;
+            }
+            #generate-button { /*Button that generates the prompt*/
+                background-color: #444444;
+                color: #ffffff;
+                display: block; /*Button behaves like a box*/
+                font-family: "Times New Roman";
+                font-size: 1.5rem; /*rem scales text according to browser settings*/
+                /*Automatic horizontal margins for block display*/
+                margin-left: auto;
+                margin-right: auto;
+            }
+            #generate-button:active { /*Button that generates the prompt*/
+                background-color: #888888;
+            }
+            #question-container { /*Where the generated question will show up*/
+                border: 2px solid black;
+                background-color: #cdcdcd;
+                margin: 20px;
+                min-height: 100px;
+                padding: 10px;
+            }
+            #select { /*Parameters for generated questions*/
+                display: flex; /*Display them side by side*/
+                justify-content: space-around; /*Space them out*/
+            }
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <!--Title of the website-->
+        <div id="big-title">
+            <h1 id="title">AP Calculus Question Generator</h1>
+            <t id="output"></t>
+        </div>
+
+        <!--Parameters for prompt that will generate the question.-->
+        <div id="select">
+
+            <!--Selecting unit for practice questions-->
+            <div id="unit-select">
+
+                <t>Unit:</t>
+                <button id="toggle-unit-button" onclick="toggleUnitMenu()">Select a unit</button>
+
+                <!--Dropdown menu that lists the units-->
+                <div id="unit-menu" class="dropdown" hidden>
+                    <t>Unit 1 - Limits and Continuity</t><br>
+                    <t>Unit 2 - Differentiation and Fundamental Properties</t><br>
+                    <t>Unit 3 - Differentiation: Composite, Implicit, and Inverse Functions</t><br>
+                    <t>Unit 4 - Contextual Applications of Differentiation</t><br>
+                    <t>Unit 5 - Analytical Applications of Differentiation</t><br>
+                    <t>Unit 6 - Integration and Accumulation of Change</t><br>
+                    <t>Unit 7 - Differential Equations</t><br>
+                    <t>Unit 8 - Applications of Integration</t><br>
+                </div>
+
+                <script>
+                    function toggleUnitMenu()
+                    { // Toggling the unit dropdown menu when the button is clicked.
+                        document.getElementById("unit-menu").hidden = !document.getElementById("unit-menu").hidden;
+                    }
+                </script>
+
+                <script>
+                    // Changing the button's text once a unit is selected.
+                    document.getElementById("unit-menu").addEventListener("click", (event) => {
+                        if (event.target.tagName == "T") { // tagName is ALWAYS UPPERCASE!
+                            // event.target is whatever was clicked.
+                            // If the user clicked on a text element...
+                            const clickedUnit = event.target.innerText; 
+                            document.getElementById("toggle-unit-button").innerText = clickedUnit;
+                            // The button now reads whatever was clicked...
+                            toggleUnitMenu(); // ...then the menu is hidden.
+                        }
+                    })
+                </script>
+
+            </div>
+
+            <div id="question-select">
+                <!--Determines whether to generate multiple choice or free response questions-->
+                <t>Question type:</t>
+                <button id="question-button" onclick="toggleQuestion()">Multiple Choice</button>
+                <script>
+                    function toggleQuestion()
+                    {
+                        let questionButton = document.getElementById("question-button");
+                        if (questionButton.innerText === "Multiple Choice")
+                        {
+                            questionButton.innerText = "Free Response";
+                        }
+                        else if (questionButton.innerText === "Free Response")
+                        {
+                            questionButton.innerText = "Multiple Choice";
+                        }
+                    }
+                </script>
+            </div>
+
+            <div id="calc-select"> 
+                <!--Determines whether to generate questions that require a calculator-->
+                <t>Calculator:</t>
+                <button id="calc-button" onclick="toggleCalc()">No</button>
+                <script>
+                    function toggleCalc()
+                    {
+                        let calcButton = document.getElementById("calc-button");
+                        if (calcButton.innerText === "No")
+                        {
+                            calcButton.innerText = "Yes";
+                        }
+                        else if (calcButton.innerText === "Yes")
+                        {
+                            calcButton.innerText = "No";
+                        }
+                    }
+                </script>
+            </div>
+
+        </div><br><br>
+
+        <button id="generate-button" onclick="sendMessage()">Generate</button><br>
+        <div id="question-container"></div><br>
+
+        <script> // AI Prompt Script
+
+            const questionContainer = document.getElementById('question-container');
+            const generateButton = document.getElementById('generate-button');
+            let conversationId = null;
+
+            // Load or create conversation ID that persists across page reloads.
+            async function initializeConversation()
+            {
+                conversationId = sessionStorage.getItem('conversationId');
+                // Session storage is what's stored in RAM every time a website is loaded.
+                // Checks in RAM to see if there's already a conversation ID.
+                if (!conversationId) 
+                { // If there isn't...
+                    conversationId = generateConversationId() // ...create one...
+                    sessionStorage.setItem('conversationId', conversationId); // ...then store it.
+                } // ALL of this will run after existing messages are loaded.
+                await loadConversation();
+            }
+
+            function generateConversationId()
+            { // toString(n) converts to base n
+                return 'conv_' + Date.now() + '_' + Math.floor(Math.random() * Math.pow(36,7)).toString(36);
+            }
+
+            async function loadConversation()
+            {
+                try { // Catching errors so nothing crashes.
+                    const response = await fetch(`/conversation/${conversationId}`);
+                    // Calls the route while passing in the generated ID, then waits for the message.
+                    const messages = await response.json();
+                    // Stores the content of the response. messages is an array.
+                    questionContainer.innerHTML = '';
+                    // Clear messages shown in the website.
+                    messages.forEach(msg => { // For each message in the conversation...
+                        addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai'); //...add it, alongside whoever sent it.
+                    }); // If role is user, then user, else ai.
+                } catch (error) {
+                    console.error('Error loading conversation:', error);
+                }
+            }
+
+            async function clearChat() {
+                try {
+                    await fetch(`/conversation/${conversationId}`, {
+                        method: 'DELETE' 
+                    }); // Calls the delete method of the route while passing in the generated ID.
+                    conversationId = generateConversationId(); // Creates a new ID.
+                    sessionStorage.setItem('conversationId', conversationId); // Replaces the old ID.
+                    questionContainer.innerHTML = ''; // Clear messages shown in the website.
+                } catch (error) {
+                    console.error('Error clearing chat:', error);
+                }
+            }
+
+            // This will run when generate-button is clicked.
+            async function sendMessage()
+            {
+                const message = `Generate 5 practice ${document.getElementById("question-button").innerText} questions modelled by the AP Calculus test reviewing ${document.getElementById("toggle-unit-button").innerText}. ${document.getElementById("calc-button").innerText} calculators allowed.`;
+                generateButton.disabled = true; // Disable input while processing.
+                addMessage(message, 'user'); // Add user message to chat.
+
+                try {
+                    // Create a new message div for AI response with streaming cursor.
+                    const aiMessageDiv = document.createElement('div');
+                    aiMessageDiv.className = 'message ai-message'; // Creates new class containing the message.
+                    const cursor = document.createElement('span'); // Creates the cursor...
+                    cursor.className = 'cursor'; // ...also assigns it to a class...
+                    aiMessageDiv.appendChild(cursor); // ...then puts it into the most recent word...
+                    questionContainer.appendChild(aiMessageDiv); // ...then puts said word into the question container.
+                    questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
+
+                    // Set up server sent event connection.
+                    // This allows for streaming the AI response.
+                    // A fetch request is one and done, while an EventSource is a pesistent connection.
+                    const eventSource = new EventSource(
+                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
+                    ); // Calls the /chat/stream route in the server.
+                    let fullResponse = '';
+
+                    eventSource.onmessage = (event) => {
+                        if (event.data = '[DONE]')
+                        { // If the DONE message is received, meaning the AI is done...
+                            eventSource.close();
+                            cursor.remove();
+                          // ...close the connection and get rid of the cursor.
+                        } else {
+                            const chunk = event.data; // Receives chunk from server.
+                            fullResponse += chunk; // Adds it to the response.
+                            aiMessageDiv.textContent = fullResponse; // Show the response on the website.
+                            aiMessageDiv.appendChild(cursor); // Cursor moves to the end of the most recent word.
+                            questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
+                        }
+                    };
+                    eventSource.onerror = (error) => { // If there is an error...
+                        console.error('SSE Error:', error);
+                        eventSource.close();
+                        cursor.remove();
+                        // ...also close the connection and get rid of the cursor.
+                    };
+                } catch (error) { // Error sending the message.
+                    console.error('Error:', error);
+                    addMessage('There was an error processing your request', 'ai');
+                }
+
+                generateButton.disabled = false; // Reenable button for next message.
+            }
+
+            function addMessage(text, sender)
+            { // Displaying new messages on the website.
+                const messageDiv = document.createElement('div'); // Creates a new div for the message.
+                messageDiv.className = `message ${sender}-message`; // Assigns it a class depending on the sender.
+                messageDiv.textContent = text; // Sets the content of the div to the text.
+                questionContainer.appendChild(messageDiv); // The div is put in the question container.
+                questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
+            }
+
+            initializeConversation(); // Initialize conversation when the page loads.
+
+        </script>
+            
+    </body>
+
+</html>
