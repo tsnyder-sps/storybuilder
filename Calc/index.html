@@ -57,6 +57,10 @@
                 justify-content: space-around; /*Space them out*/
             }
 
+            @keyframes blink {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0; }
+            }
         </style>
 
     </head>
@@ -239,7 +243,7 @@
                     let fullResponse = '';
 
                     eventSource.onmessage = (event) => {
-                        if (event.data = '[DONE]')
+                        if (event.data === '[DONE]') //********* if (event.data = '[DONE]') was the failing line. It should be '===' instead of '='.
                         { // If the DONE message is received, meaning the AI is done...
                             eventSource.close();
                             cursor.remove();

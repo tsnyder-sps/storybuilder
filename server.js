@@ -16,8 +16,8 @@ const openai = new OpenAI({
     'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
   }
 });
-console.log(process.env.CF_ACCESS_CLIENT_ID); 
-console.log(process.env.CF_ACCESS_CLIENT_SECRET);
+// console.log(process.env.CF_ACCESS_CLIENT_ID); 
+// console.log(process.env.CF_ACCESS_CLIENT_SECRET);
 
 // Statistically set model
 const model = 'gemma3:12b-it-q8_0'
@@ -76,7 +76,7 @@ app.get('/chat/stream', async (req, res) => {
         });
 
         // Now the AI is called.
-        const stream = await open.ai.chat.completions.create({
+        const stream = await openai.chat.completions.create({ //******* Syntax error here. You had "open.ai.chat.completions.create({" */
             // Request sent to local AI. Everything below is passed.
             model: model,
             messages: conversation, // Full chat history
@@ -93,14 +93,14 @@ app.get('/chat/stream', async (req, res) => {
                 const content = chunk.choices[0].delta.content;
                 // Extracts the chunk content as a string...
                 aiResponse += content; //...then adds it to the full response.
-                res.write(`data:  ${content}\n\n`);
+                res.write(`data: ${content}\n\n`); //*******Found a syntax issue here. There was an extra space after the : so the SSE message to the client was malformed */
                 // Sends each chunk to the website.
             }
         }
 
         conversation.push({ role: 'assistant', content: aiResponse });
         // Once the loop is done, the full answer is added to the history.
-        conversation.set(conversationId, conversation);
+        conversations.set(conversationId, conversation); //*******Found a syntax issue here. We need to set the conversation in the Map object itself. */
         // Saves the history back into the Map for next time.
 
         // Signals end of AI response
