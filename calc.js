@@ -1,7 +1,7 @@
-import express from 'express';
-import OpenAI from 'openai';
-import path from 'path';
-import dotenv from 'dotenv';
+import express from 'express'; // Defines a routing system between server and client.
+import OpenAI from 'openai'; // Calling the AI.
+import path from 'path'; // Handling file and directory paths, works for ANY platform.
+import dotenv from 'dotenv'; // Storing keys separately from the project and loading them at runtime.
 console.log(dotenv.config());
 
 const app = express();
@@ -29,7 +29,7 @@ const conversations = new Map();
 // Serve static files from 'Calc' folder.
 app.use(express.static('Calc'));
 
-// Default route 
+// Default route, for requests that do not match any defined routes.
 // req is what is being sent in. res is the response sent to the html file.
 app.get('/', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'index.html')); // Sends the file
@@ -61,7 +61,7 @@ app.get('/chat/stream', async (req, res) => {
 
         // Get conversation history, if empty create a new one.
         let conversation = conversations.get(conversationId) || [];
-        // Then, the user's new message is added to the history.
+        // Then, the user's new message is added to the conversation.
         // This allows the AI to have the full context.
         conversation.push({ role: 'user', content: message });
 

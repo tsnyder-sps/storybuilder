@@ -5,12 +5,12 @@
         <style> /* Remember . is for classes and # is for IDs! */
 
             .cursor { /*Cursor displayed while waiting for AI response.*/
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: #555555;
-            margin-left: 2px;
-            animation: blink 1s infinite;
+                display: inline-block;
+                width: 2px;
+                height: 1em;
+                background: #555555;
+                margin-left: 2px;
+                animation: blink 1s infinite; /* References @keyframes blink.*/
             }
             .dropdown { /*Dropdown menus*/
                 background: #efefef;
@@ -57,10 +57,11 @@
                 justify-content: space-around; /*Space them out*/
             }
 
-            @keyframes blink {
+            @keyframes blink { /*Defines steps in the blink animation*/
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0; }
             }
+
         </style>
 
     </head>
@@ -69,8 +70,7 @@
 
         <!--Title of the website-->
         <div id="big-title">
-            <h1 id="title">AP Calculus Question Generator</h1>
-            <t id="output"></t>
+            <h1 id="title">AP Calculus Question Generator</h1>  
         </div>
 
         <!--Parameters for prompt that will generate the question.-->
@@ -109,8 +109,8 @@
                             // If the user clicked on a text element...
                             const clickedUnit = event.target.innerText; 
                             document.getElementById("toggle-unit-button").innerText = clickedUnit;
-                            // The button now reads whatever was clicked...
-                            toggleUnitMenu(); // ...then the menu is hidden.
+                            // The button now reads whatever was clicked.
+                            toggleUnitMenu();
                         }
                     })
                 </script>
@@ -157,15 +157,25 @@
                 </script>
             </div>
 
+            <div id="question-num">
+                <!--Determines how many questions to generate.-->
+                <t>Amount of questions:</t>
+                <input id="question-num-input" type="number" min="1" max="45">
+            </div>
+
         </div><br><br>
 
-        <button id="generate-button" onclick="sendMessage()">Generate</button><br>
+        <button id="generate-button">Generate</button><br>
         <div id="question-container"></div><br>
 
         <script> // AI Prompt Script
 
-            const questionContainer = document.getElementById('question-container');
+            const calcButton = document.getElementById('calc-button');
             const generateButton = document.getElementById('generate-button');
+            const toggleUnitButton = document.getElementById('toggle-unit-button');
+            const questionButton = document.getElementById("question-button");
+            const questionContainer = document.getElementById('question-container');
+            const questionNumInput = document.getElementById('question-num-input');
             let conversationId = null;
 
             // Load or create conversation ID that persists across page reloads.
@@ -197,8 +207,11 @@
                     questionContainer.innerHTML = '';
                     // Clear messages shown in the website.
                     messages.forEach(msg => { // For each message in the conversation...
-                        addMessage(msg.content, msg.role === 'user' ? 'user' : 'ai'); //...add it, alongside whoever sent it.
-                    }); // If role is user, then user, else ai.
+                        if (msg.role === 'ai')
+                        { // ...add it only if it's an AI message.
+                            addMessage(msg.content, 'ai'); 
+                        }
+                    });
                 } catch (error) {
                     console.error('Error loading conversation:', error);
                 }
@@ -220,10 +233,10 @@
             // This will run when generate-button is clicked.
             async function sendMessage()
             {
-                const message = `Generate 5 practice ${document.getElementById("question-button").innerText} questions modelled by the AP Calculus test reviewing ${document.getElementById("toggle-unit-button").innerText}. ${document.getElementById("calc-button").innerText} calculators allowed.`;
+                const message = `Generate ${questionNumInput.value} practice ${questionButton.innerText} questions modelled by the AP Calculus test reviewing ${toggleUnitButton.innerText}. ${calcButton.innerText} calculators allowed. Your response must only include the questions and their answer choices (if they are multiple choice), with no answer keys. Leave a space in between each question. Do not include any questions involving graphs.`;
+                console.log(message);
                 generateButton.disabled = true; // Disable input while processing.
-                addMessage(message, 'user'); // Add user message to chat.
-
+                
                 try {
                     // Create a new message div for AI response with streaming cursor.
                     const aiMessageDiv = document.createElement('div');
@@ -280,6 +293,13 @@
             }
 
             initializeConversation(); // Initialize conversation when the page loads.
+
+            generateButton.addEventListener("click", (event) => { // When the generate button is clicked...
+                if (toggleUnitButton.innerText != "Select a unit" && questionNumInput.value != null)
+                { // Only send the message if a unit and a number of questions have been selected.
+                    sendMessage();
+                }
+            });
 
         </script>
             
