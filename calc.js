@@ -16,8 +16,6 @@ const openai = new OpenAI({
     'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET
   }
 });
-// console.log(process.env.CF_ACCESS_CLIENT_ID); 
-// console.log(process.env.CF_ACCESS_CLIENT_SECRET);
 
 // Statistically set model
 const model = 'gemma3:12b-it-q8_0'
@@ -26,6 +24,9 @@ const model = 'gemma3:12b-it-q8_0'
 const conversations = new Map();
 // Map is an array with an ID instead of index numbers.
 
+// Translates JSON into readable JS objects. 
+// Must come before routes so the JSON in the routes exist.
+app.use(express.json());
 // Serve static files from 'Calc' folder.
 app.use(express.static('Calc'));
 
@@ -53,63 +54,35 @@ app.delete('/conversation/:conversationId', (req, res) => {
     // HTTP status code 200 tells the browser this was successful.
 });
 
-app.get('/chat/stream', async (req, res) => {
+app.post('/chat', async (req, res) => {
     // Async so I can wait for the AI to think and respond.
-    try { // Catching errors like the AI being offline so the server doesn't crash.
-        const message = req.query.message; // Gets user text from the URL.
-        const conversationId = req.query.conversationId; // Gets ID to know which chat history to use.
+    try {
+        // Access data sent by the client.
+        const aiPrompt = req.body.prompt;
+        const conversationId = req.body.conversation;
 
         // Get conversation history, if empty create a new one.
         let conversation = conversations.get(conversationId) || [];
         // Then, the user's new message is added to the conversation.
         // This allows the AI to have the full context.
-        conversation.push({ role: 'user', content: message });
+        conversation.push({ role: 'user', content: aiPrompt });
 
-        // Telling the browser...
-        res.writeHead(200,{ // The request was successful.
-            'Content-Type': 'text/event-stream',
-            // Don't download this as a file because it's a stream of data.
-            'Cache-Control': 'no-cache',
-            // Don't save a copy of this.
-            'Connection': 'keep-alive'
-            // Keep the connection going so data can keep flowing.
-        });
-
-        // Now the AI is called.
-        const stream = await openai.chat.completions.create({ //******* Syntax error here. You had "open.ai.chat.completions.create({" */
-            // Request sent to local AI. Everything below is passed.
+        // Call the AI.
+        const aiResponse = await openai.chat.completions.create({
             model: model,
             messages: conversation, // Full chat history
-            max_tokens: 8192, // Word limit
-            stream: true // Sends every word continously.
+            max_tokens: 8192 // Word limit
         });
 
-        let aiResponse = '';
+        // Send response back to the client.
+        res.json({
+            response: aiResponse.choices[0].message.content
+            // Extract content from the array sent back by the AI.
+        });
 
-        for await (const chunk of stream)
-        { // Runs every time a piece of a word is received from the AI.
-            if (chunk.choices[0]?.delta?.content)
-            { // Does the chunk actually contain text?
-                const content = chunk.choices[0].delta.content;
-                // Extracts the chunk content as a string...
-                aiResponse += content; //...then adds it to the full response.
-                res.write(`data: ${content}\n\n`); //*******Found a syntax issue here. There was an extra space after the : so the SSE message to the client was malformed */
-                // Sends each chunk to the website.
-            }
-        }
-
-        conversation.push({ role: 'assistant', content: aiResponse });
-        // Once the loop is done, the full answer is added to the history.
-        conversations.set(conversationId, conversation); //*******Found a syntax issue here. We need to set the conversation in the Map object itself. */
-        // Saves the history back into the Map for next time.
-
-        // Signals end of AI response
-        res.write('data: [DONE]\n\n');
     } catch (error) {
-        // If anything breaks, log the error and send it.
-        res.write('data: Error processing request\n\n');
-    } finally {
-        res.end(); // Connection terminated.
+        console.error("OpenAI Error:", error);
+        res.json({response: "Something went wrong with the AI request."});
     }
 });
 

@@ -1,17 +1,17 @@
+<!DOCTYPE html>
 <html>
     
     <head>
 
+        <!-- KaTeX stuff for rendering math equations -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body);">
+        </script>
+
         <style> /* Remember . is for classes and # is for IDs! */
 
-            .cursor { /*Cursor displayed while waiting for AI response.*/
-                display: inline-block;
-                width: 2px;
-                height: 1em;
-                background: #555555;
-                margin-left: 2px;
-                animation: blink 1s infinite; /* References @keyframes blink.*/
-            }
             .dropdown { /*Dropdown menus*/
                 background: #efefef;
                 border: 1px solid black;
@@ -27,6 +27,9 @@
             }
             .ai-message {
                 background-color: #efefef;
+                white-space: pre-wrap;
+                /* pre: Preserves newlines and spaces.
+                   wrap: Ensures the text still wraps within the box. */
             }
 
             #big-title { 
@@ -55,11 +58,6 @@
             #select { /*Parameters for generated questions*/
                 display: flex; /*Display them side by side*/
                 justify-content: space-around; /*Space them out*/
-            }
-
-            @keyframes blink { /*Defines steps in the blink animation*/
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0; }
             }
 
         </style>
@@ -233,54 +231,30 @@
             // This will run when generate-button is clicked.
             async function sendMessage()
             {
-                const message = `Generate ${questionNumInput.value} practice ${questionButton.innerText} questions modelled by the AP Calculus test reviewing ${toggleUnitButton.innerText}. ${calcButton.innerText} calculators allowed. Your response must only include the questions and their answer choices (if they are multiple choice), with no answer keys. Leave a space in between each question. Do not include any questions involving graphs.`;
-                console.log(message);
-                generateButton.disabled = true; // Disable input while processing.
-                
+                const aiPrompt = `Generate ${questionNumInput.value} practice ${questionButton.innerText} questions modelled by the AP Calculus test reviewing ${toggleUnitButton.innerText}. ${calcButton.innerText} calculators allowed. Your response must only include the questions and their answer choices (if they are multiple choice), with no answer keys. Leave a space in between each question. Do not include any questions involving graphs.`;
+                console.log(aiPrompt);
+                generateButton.innerText = "Loading..."; // Disable the button and change text to indicate that the AI response is processing.
                 try {
-                    // Create a new message div for AI response with streaming cursor.
-                    const aiMessageDiv = document.createElement('div');
-                    aiMessageDiv.className = 'message ai-message'; // Creates new class containing the message.
-                    const cursor = document.createElement('span'); // Creates the cursor...
-                    cursor.className = 'cursor'; // ...also assigns it to a class...
-                    aiMessageDiv.appendChild(cursor); // ...then puts it into the most recent word...
-                    questionContainer.appendChild(aiMessageDiv); // ...then puts said word into the question container.
-                    questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
-
-                    // Set up server sent event connection.
-                    // This allows for streaming the AI response.
-                    // A fetch request is one and done, while an EventSource is a pesistent connection.
-                    const eventSource = new EventSource(
-                    `/chat/stream?message=${encodeURIComponent(message)}&conversationId=${conversationId}`
-                    ); // Calls the /chat/stream route in the server.
-                    let fullResponse = '';
-
-                    eventSource.onmessage = (event) => {
-                        if (event.data === '[DONE]') //********* if (event.data = '[DONE]') was the failing line. It should be '===' instead of '='.
-                        { // If the DONE message is received, meaning the AI is done...
-                            eventSource.close();
-                            cursor.remove();
-                          // ...close the connection and get rid of the cursor.
-                        } else {
-                            const chunk = event.data; // Receives chunk from server.
-                            fullResponse += chunk; // Adds it to the response.
-                            aiMessageDiv.textContent = fullResponse; // Show the response on the website.
-                            aiMessageDiv.appendChild(cursor); // Cursor moves to the end of the most recent word.
-                            questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
-                        }
-                    };
-                    eventSource.onerror = (error) => { // If there is an error...
-                        console.error('SSE Error:', error);
-                        eventSource.close();
-                        cursor.remove();
-                        // ...also close the connection and get rid of the cursor.
-                    };
+                    // Post request for chat route.
+                    const chatRequest = await fetch(`/chat`, {
+                        method: 'POST', // Specify so browser doesn´t use GET.
+                        headers: { // Tell server I am sending JSON.
+                            'Content-Type': 'application/json'
+                        }, 
+                        body: JSON.stringify({
+                            // HTTP requests carry text so the JSON object must be turned into a string.
+                            prompt: aiPrompt,
+                            conversation: conversationId
+                        })
+                    });
+                    // Receiving the AI response from the server.
+                    const result = await chatRequest.json();
+                    addMessage(result.response, 'ai');
                 } catch (error) { // Error sending the message.
                     console.error('Error:', error);
                     addMessage('There was an error processing your request', 'ai');
                 }
-
-                generateButton.disabled = false; // Reenable button for next message.
+                generateButton.innerText = "Generate"; // Reenable button for next message by resetting the text.
             }
 
             function addMessage(text, sender)
@@ -289,14 +263,25 @@
                 messageDiv.className = `message ${sender}-message`; // Assigns it a class depending on the sender.
                 messageDiv.textContent = text; // Sets the content of the div to the text.
                 questionContainer.appendChild(messageDiv); // The div is put in the question container.
-                questionContainer.scrollTop = questionContainer.scrollHeight; // Makes window scroll alongside the response.
+                questionContainer.scrollTop = questionContainer.scrollHeight;
+                
+                // Render math inside the new message.
+                renderMathInElement(messageDiv, {
+                    delimiters: [ // These are added to account for $ used by AI to output math.
+                        {left: '$$', right: '$$', display: true}, // Block math
+                        {left: '$', right: '$', display: false},  // Inline math
+                        {left: '\\(', right: '\\)', display: false}, // Alternative inline math
+                        {left: '\\[', right: '\\]', display: true}  // Alternative block math
+                    ],
+                    throwOnError: false // Prevents the whole app from crashing if the AI makes a typo in the LaTeX.
+                });
             }
 
             initializeConversation(); // Initialize conversation when the page loads.
 
             generateButton.addEventListener("click", (event) => { // When the generate button is clicked...
-                if (toggleUnitButton.innerText != "Select a unit" && questionNumInput.value != null)
-                { // Only send the message if a unit and a number of questions have been selected.
+                if (generateButton.innerText != "Loading..." && toggleUnitButton.innerText != "Select a unit" && questionNumInput.value != null)
+                { // Only send the message if there isn't one already being processed, and if a unit and a number of questions have been selected.
                     sendMessage();
                 }
             });
