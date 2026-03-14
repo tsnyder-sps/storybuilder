@@ -37,7 +37,6 @@ app.get('/', (req, res) => {
 });
 
 // Get conversation history
-// : means expecting input. conversationId is a query, AKA a value passed after question mark in url.
 // No return because this will keep running even when the conversation ID changes.
 app.get('/conversation/:conversationId', (req, res) => {
   const { conversationId } = req.params; // Stores the ID passed in.
@@ -60,32 +59,36 @@ app.post('/chat', async (req, res) => {
         // Access data sent by the client.
         const aiPrompt = req.body.prompt;
         const conversationId = req.body.conversation;
-
         // Get conversation history, if empty create a new one.
         let conversation = conversations.get(conversationId) || [];
-        // Then, the user's new message is added to the conversation.
+        // Then, the request is added to the conversation.
         // This allows the AI to have the full context.
         conversation.push({ role: 'user', content: aiPrompt });
-
+        // Save back to the conversations Map object.
+        conversations.set(conversationId, conversation);
         // Call the AI.
-        const aiResponse = await openai.chat.completions.create({
+        const aiCall = await openai.chat.completions.create({
             model: model,
             messages: conversation, // Full chat history
             max_tokens: 8192 // Word limit
         });
-
+        // Extract content from the array sent back by the AI.
+        const aiResponse = aiCall.choices[0].message.content;
+        // Add AI response to the conversation.
+        conversation.push({role: 'ai', content: aiResponse});
         // Send response back to the client.
         res.json({
-            response: aiResponse.choices[0].message.content
-            // Extract content from the array sent back by the AI.
+            response: aiResponse
         });
 
     } catch (error) {
         console.error("OpenAI Error:", error);
-        res.json({response: "Something went wrong with the AI request."});
+        res.json({response: "Something went wrong with the request."});
     }
 });
 
 app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
 }); 
+
+// TODO: look at docker stuff for app. MCP, giving docs to a server to monitor and make changes to lots of apps.

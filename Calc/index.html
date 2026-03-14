@@ -3,15 +3,24 @@
     
     <head>
 
-        <!-- KaTeX stuff for rendering math equations -->
+        <!-- html2pdf library for downloading generated questions -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+        <!-- KaTeX library for rendering math equations -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-            onload="renderMathInElement(document.body);">
+            onload="renderMathInElement(document.body);"> // Render any math elements that show up when the page loads.
         </script>
 
         <style> /* Remember . is for classes and # is for IDs! */
 
+            .ai-message {
+                background-color: #efefef;
+                white-space: pre-wrap;
+                /* pre: Preserves newlines and spaces.
+                   wrap: Ensures the text still wraps within the box. */
+            }
             .dropdown { /*Dropdown menus*/
                 background: #efefef;
                 border: 1px solid black;
@@ -25,28 +34,31 @@
                 padding: 10px;
                 border-radius: 5px;
             }
-            .ai-message {
-                background-color: #efefef;
-                white-space: pre-wrap;
-                /* pre: Preserves newlines and spaces.
-                   wrap: Ensures the text still wraps within the box. */
+            .prompt { /*Prompt buttons (delete, generate, download)*/
+                background-color: #444444;
+                color: #ffffff;
+                /*display: block; /*Button behaves like a box*/
+                font-family: "Times New Roman";
+                font-size: 1.25rem; /*rem scales text according to browser settings*/
+                max-height: 35px;
+            }
+            .prompt:active {
+                background-color: #888888;
             }
 
             #big-title { 
                 text-align: center;
             }
-            #generate-button { /*Button that generates the prompt*/
-                background-color: #444444;
-                color: #ffffff;
-                display: block; /*Button behaves like a box*/
-                font-family: "Times New Roman";
-                font-size: 1.5rem; /*rem scales text according to browser settings*/
-                /*Automatic horizontal margins for block display*/
-                margin-left: auto;
-                margin-right: auto;
+            #prompt { /*The ENTIRE div for the prompt buttons*/
+                display: flex;
+                align-items: center; /*Vertically center elements*/
+                justify-content: center; /* Group items in the horizontal center */
+                gap: 15px; /* Gap between the three buttons */
+                width: 100%;
             }
-            #generate-button:active { /*Button that generates the prompt*/
-                background-color: #888888;
+            #select { /*Parameters for generated questions*/
+                display: flex; /*Display them side by side*/
+                justify-content: space-around; /*Space them out*/
             }
             #question-container { /*Where the generated question will show up*/
                 border: 2px solid black;
@@ -55,9 +67,13 @@
                 min-height: 100px;
                 padding: 10px;
             }
-            #select { /*Parameters for generated questions*/
-                display: flex; /*Display them side by side*/
-                justify-content: space-around; /*Space them out*/
+
+            @media print { /*ONLY when being printed...*/
+                #question-container { /*...do this to the question container.*/
+                    background-color: white !important;
+                    color: black !important;
+                    border: none !important;
+                }
             }
 
         </style>
@@ -90,6 +106,8 @@
                     <t>Unit 6 - Integration and Accumulation of Change</t><br>
                     <t>Unit 7 - Differential Equations</t><br>
                     <t>Unit 8 - Applications of Integration</t><br>
+                    <t>Unit 9 - Parametric Equations, Polar Coordinates, and Vector-Valued Functions</t><br>
+                    <t>Unit 10 - Infinite Sequences and Series</t><br>
                 </div>
 
                 <script>
@@ -123,12 +141,10 @@
                     function toggleQuestion()
                     {
                         let questionButton = document.getElementById("question-button");
-                        if (questionButton.innerText === "Multiple Choice")
-                        {
+                        if (questionButton.innerText === "Multiple Choice") {
                             questionButton.innerText = "Free Response";
                         }
-                        else if (questionButton.innerText === "Free Response")
-                        {
+                        else if (questionButton.innerText === "Free Response") {
                             questionButton.innerText = "Multiple Choice";
                         }
                     }
@@ -143,12 +159,10 @@
                     function toggleCalc()
                     {
                         let calcButton = document.getElementById("calc-button");
-                        if (calcButton.innerText === "No")
-                        {
+                        if (calcButton.innerText === "No") {
                             calcButton.innerText = "Yes";
                         }
-                        else if (calcButton.innerText === "Yes")
-                        {
+                        else if (calcButton.innerText === "Yes") {
                             calcButton.innerText = "No";
                         }
                     }
@@ -162,30 +176,39 @@
             </div>
 
         </div><br><br>
-
-        <button id="generate-button">Generate</button><br>
+        <div id="prompt">
+        <!--Made both a div and a class here both named "prompt".
+            The div centers the buttons affecting the prompt.
+            The class gives them the same attributes without affecting the whole div.-->
+            <button id="delete-button" class="prompt" onclick="clearChat()" hidden>Delete</button>
+            <button id="generate-button" style="font-size: 2.0rem; max-height: none;" class="prompt">Generate</button>
+            <!--The button's style overrides the one in the class.-->
+            <button id="download-button" class="prompt" onclick="downloadChat()" hidden>Download</button>
+        </div>
+        
         <div id="question-container"></div><br>
 
         <script> // AI Prompt Script
 
             const calcButton = document.getElementById('calc-button');
+            const deleteButton = document.getElementById('delete-button');
+            const downloadButton = document.getElementById('download-button');
             const generateButton = document.getElementById('generate-button');
-            const toggleUnitButton = document.getElementById('toggle-unit-button');
             const questionButton = document.getElementById("question-button");
             const questionContainer = document.getElementById('question-container');
             const questionNumInput = document.getElementById('question-num-input');
+            const toggleUnitButton = document.getElementById('toggle-unit-button');
             let conversationId = null;
 
             // Load or create conversation ID that persists across page reloads.
             async function initializeConversation()
             {
-                conversationId = sessionStorage.getItem('conversationId');
+                conversationId = localStorage.getItem('conversationId');
                 // Session storage is what's stored in RAM every time a website is loaded.
                 // Checks in RAM to see if there's already a conversation ID.
-                if (!conversationId) 
-                { // If there isn't...
+                if (!conversationId) { // If there isn't...
                     conversationId = generateConversationId() // ...create one...
-                    sessionStorage.setItem('conversationId', conversationId); // ...then store it.
+                    localStorage.setItem('conversationId', conversationId); // ...then store it.
                 } // ALL of this will run after existing messages are loaded.
                 await loadConversation();
             }
@@ -198,15 +221,19 @@
             async function loadConversation()
             {
                 try { // Catching errors so nothing crashes.
-                    const response = await fetch(`/conversation/${conversationId}`);
                     // Calls the route while passing in the generated ID, then waits for the message.
-                    const messages = await response.json();
+                    const response = await fetch(`/conversation/${conversationId}`);
                     // Stores the content of the response. messages is an array.
+                    const messages = await response.json();
+                    // Clear messages shown before loading conversation.
                     questionContainer.innerHTML = '';
-                    // Clear messages shown in the website.
+                    // If there are messages, show the delete and download buttons.
+                    if (messages.length > 0) {
+                        deleteButton.hidden = false;
+                        downloadButton.hidden = false;
+                    }
                     messages.forEach(msg => { // For each message in the conversation...
-                        if (msg.role === 'ai')
-                        { // ...add it only if it's an AI message.
+                        if (msg.role === 'ai') { // ...add it only if it's an AI message.
                             addMessage(msg.content, 'ai'); 
                         }
                     });
@@ -221,7 +248,7 @@
                         method: 'DELETE' 
                     }); // Calls the delete method of the route while passing in the generated ID.
                     conversationId = generateConversationId(); // Creates a new ID.
-                    sessionStorage.setItem('conversationId', conversationId); // Replaces the old ID.
+                    localStorage.setItem('conversationId', conversationId); // Replaces the old ID.
                     questionContainer.innerHTML = ''; // Clear messages shown in the website.
                 } catch (error) {
                     console.error('Error clearing chat:', error);
@@ -250,6 +277,10 @@
                     // Receiving the AI response from the server.
                     const result = await chatRequest.json();
                     addMessage(result.response, 'ai');
+                    // If the generation is successful, add the delete and download buttons.
+                    deleteButton.hidden = false;
+                    downloadButton.hidden = false;
+                    
                 } catch (error) { // Error sending the message.
                     console.error('Error:', error);
                     addMessage('There was an error processing your request', 'ai');
@@ -265,7 +296,7 @@
                 questionContainer.appendChild(messageDiv); // The div is put in the question container.
                 questionContainer.scrollTop = questionContainer.scrollHeight;
                 
-                // Render math inside the new message.
+                // MORE KaTex stuff, render math inside the new message.
                 renderMathInElement(messageDiv, {
                     delimiters: [ // These are added to account for $ used by AI to output math.
                         {left: '$$', right: '$$', display: true}, // Block math
@@ -273,12 +304,27 @@
                         {left: '\\(', right: '\\)', display: false}, // Alternative inline math
                         {left: '\\[', right: '\\]', display: true}  // Alternative block math
                     ],
-                    throwOnError: false // Prevents the whole app from crashing if the AI makes a typo in the LaTeX.
+                    throwOnError: false // Prevents the whole program from crashing if the AI makes a typo in the LaTeX.
                 });
+            }
+
+            function downloadChat()
+            {   // Downloading generated questions after clicking the download button.
+                // html2pdf configuration
+                const downloadOptions = {
+                    margin: 10,
+                    filename: 'questions.pdf',
+                    image: {type: 'jpeg', quality: 0.98},
+                    html2canvas: {scale: 2, useCORS: true},
+                    jsPDF: {unit: 'mm', format: 'a4', orientation: 'portrait'}
+                };
+                // .set() applies options, .from() converts the element to a pdf, .save() triggers the download.
+                html2pdf().set(downloadOptions).from(questionContainer).save();
             }
 
             initializeConversation(); // Initialize conversation when the page loads.
 
+            // Generating questions after clicking the generate button.
             generateButton.addEventListener("click", (event) => { // When the generate button is clicked...
                 if (generateButton.innerText != "Loading..." && toggleUnitButton.innerText != "Select a unit" && questionNumInput.value != null)
                 { // Only send the message if there isn't one already being processed, and if a unit and a number of questions have been selected.
